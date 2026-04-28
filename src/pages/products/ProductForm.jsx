@@ -74,7 +74,18 @@ export default function ProductForm() {
     setLoading(true)
     const data = await getProduct(id)
     if (data) {
-      setForm({ name: data.name||'', animal_type: data.animal_type||'ปู', size: data.size||'เล็ก', weight_g: data.weight_g||60, price: data.price||'', cost: data.cost||'', stock_qty: data.stock_qty||0, image_url: data.image_url||'', original_image_url: data.original_image_url||'' })
+      setForm({ 
+        name: data.name||'', 
+        animal_type: data.animal_type||'ปู', 
+        size: data.size||'เล็ก', 
+        unit: data.unit||'ซอง',
+        weight_g: data.weight_g||60, 
+        price: data.price||'', 
+        cost: data.cost||'', 
+        stock_qty: data.stock_qty||0, 
+        image_url: data.image_url||'', 
+        original_image_url: data.original_image_url||'' 
+      })
       setPreview(data.image_url||'')
     }
     setLoading(false)

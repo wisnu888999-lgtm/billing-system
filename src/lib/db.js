@@ -727,21 +727,25 @@ export async function getDashboardData(filters = {}) {
   let totalCost = 0
   const invoiceIds = (invoices || []).map(i => i.id)
   if (invoiceIds.length > 0) {
-    const { data: items } = await supabase
+    const { data: items, error: itemsErr } = await supabase
       .from('invoice_items')
       .select('qty, price_per_unit, cost_per_unit')
       .in('invoice_id', invoiceIds)
     
-    ;(items || []).forEach(item => {
-      const revenue = Number(item.price_per_unit) * item.qty
-      const cost = Number(item.cost_per_unit) * item.qty
-      totalCost += cost
-      totalProfit += (revenue - cost)
-    })
+    if (!itemsErr) {
+      ;(items || []).forEach(item => {
+        const revenue = Number(item.price_per_unit) * item.qty
+        const cost = Number(item.cost_per_unit) * item.qty
+        totalCost += cost
+        totalProfit += (revenue - cost)
+      })
 
-    // Subtract discounts from total profit to get Net Profit
-    const totalDiscounts = (invoices || []).reduce((sum, i) => sum + Number(i.discount_amount), 0)
-    totalProfit -= totalDiscounts
+      // Subtract discounts from total profit to get Net Profit
+      const totalDiscounts = (invoices || []).reduce((sum, i) => sum + Number(i.discount_amount), 0)
+      totalProfit -= totalDiscounts
+    } else {
+      console.warn('Could not fetch profit data (did you run the SQL update?):', itemsErr)
+    }
   }
 
   // 2. Sales Trend (by Date)

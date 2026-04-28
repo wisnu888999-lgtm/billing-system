@@ -75,7 +75,7 @@ export async function getActivityLogs(limit = 50) {
 export async function getCustomers() {
   const { data, error } = await supabase
     .from('customers')
-    .select('*, customer_branches(*)')
+    .select('*, customer_branches(*), parent:customers!parent_id(name)')
     .is('deleted_at', null) // Only get active customers
     .order('name')
   if (error) return handleError(error) || []
@@ -99,7 +99,7 @@ export async function getDeletedCustomers() {
 export async function getCustomer(id) {
   const { data, error } = await supabase
     .from('customers')
-    .select('*, customer_branches(*)')
+    .select('*, customer_branches(*), parent:customers!parent_id(name)')
     .eq('id', id)
     .single()
   if (error) return handleError(error)
@@ -151,6 +151,15 @@ export async function permanentlyDeleteCustomer(id) {
     .from('customers')
     .delete()
     .eq('id', id)
+  if (error) return handleError(error)
+  return true
+}
+
+export async function emptyRecycleBin() {
+  const { error } = await supabase
+    .from('customers')
+    .delete()
+    .not('deleted_at', 'is', null)
   if (error) return handleError(error)
   return true
 }

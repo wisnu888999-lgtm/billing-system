@@ -4,7 +4,7 @@ import { ArrowLeft, RotateCcw, Trash2, UserX, Search, AlertTriangle, X } from 'l
 import toast from 'react-hot-toast'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import EmptyState from '../../components/EmptyState'
-import { getDeletedCustomers, restoreCustomer, permanentlyDeleteCustomer, logActivity } from '../../lib/db'
+import { getDeletedCustomers, restoreCustomer, permanentlyDeleteCustomer, emptyRecycleBin, logActivity } from '../../lib/db'
 import { getCookie } from '../../lib/utils'
 
 // === Confirmation Modal ===
@@ -86,7 +86,7 @@ export default function CustomerRecycleBin() {
         console.error(err)
         toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่', { id: toastId })
       }
-    } else {
+    } else if (mode === 'delete') {
       const toastId = toast.loading('กำลังลบถาวร...')
       try {
         await permanentlyDeleteCustomer(customer.id)
@@ -97,7 +97,23 @@ export default function CustomerRecycleBin() {
         console.error(err)
         toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่', { id: toastId })
       }
+    } else if (mode === 'empty') {
+      const toastId = toast.loading('กำลังล้างถังขยะ...')
+      try {
+        await emptyRecycleBin()
+        await logActivity(getCookie('userId'), 'ล้างถังขยะลูกค้าทั้งหมด', `${customers.length} รายการ`)
+        toast.success('ล้างถังขยะเรียบร้อยแล้ว', { id: toastId })
+        await load()
+      } catch (err) {
+        console.error(err)
+        toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่', { id: toastId })
+      }
     }
+  }
+
+  async function handleEmptyTrash() {
+    if (customers.length === 0) return
+    setModal({ mode: 'empty', customer: { name: 'ข้อมูลทั้งหมดในถังขยะ' } })
   }
 
   const filtered = customers.filter(c =>
@@ -122,10 +138,19 @@ export default function CustomerRecycleBin() {
           <button onClick={() => navigate('/customers')} className="p-2.5 rounded-2xl hover:bg-gray-100 transition-colors">
             <ArrowLeft size={22} />
           </button>
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl font-bold text-gray-800">🗑️ ถังขยะลูกค้า</h2>
             {customers.length > 0 && <p className="text-xs text-gray-400">{customers.length} รายการรอดำเนินการ</p>}
           </div>
+          {customers.length > 0 && (
+            <button 
+              onClick={handleEmptyTrash}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-danger-50 text-danger-600 rounded-2xl hover:bg-danger-600 hover:text-white transition-all font-black text-sm shadow-sm active:scale-95"
+            >
+              <Trash2 size={18} />
+              ล้างถังขยะ
+            </button>
+          )}
         </div>
 
         {/* Search */}

@@ -5,7 +5,7 @@ import Cropper from 'react-easy-crop'
 import toast from 'react-hot-toast'
 import Modal from '../../components/Modal'
 import LoadingSpinner from '../../components/LoadingSpinner'
-import { getCustomer, createCustomer, updateCustomer, createBranch, updateBranch, deleteBranch, logActivity, uploadProductImage } from '../../lib/db'
+import { getCustomer, getCustomers, createCustomer, updateCustomer, createBranch, updateBranch, deleteBranch, logActivity, uploadProductImage } from '../../lib/db'
 import { getCookie } from '../../lib/utils'
 
 const getCroppedImg = async (imageSrc, pixelCrop) => {
@@ -83,10 +83,12 @@ export default function CustomerForm() {
   
   const [form, setForm] = useState({ 
     name: '', phone: '', phone_backup: '', email: '', tax_id: '',
-    branch_type: 'สำนักงานใหญ่', branch_code: '',
+    branch_type: 'สำนักงานใหญ่', branch_code: '', parent_id: '',
     address_line: '', subdistrict: '', district: '', province: '', zipcode: '',
     image_url: ''
   })
+  
+  const [allCustomers, setAllCustomers] = useState([])
   
   const [imageFile, setImageFile] = useState(null)
   const [preview, setPreview] = useState('')
@@ -111,8 +113,20 @@ export default function CustomerForm() {
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const [selectorModal, setSelectorModal] = useState(false)
+  useEffect(() => { 
+    if (isEdit) loadData()
+    loadAllCustomers()
+  }, [id])
 
-  useEffect(() => { if (isEdit) loadData() }, [id])
+  async function loadAllCustomers() {
+    try {
+      const data = await getCustomers()
+      setAllCustomers(Array.isArray(data) ? data.filter(c => c.id !== id) : [])
+    } catch (err) {
+      console.error('Load all customers error:', err)
+      setAllCustomers([])
+    }
+  }
 
   async function loadData() {
     setLoading(true)
@@ -122,6 +136,7 @@ export default function CustomerForm() {
         name: data.name||'', phone: data.phone||'', phone_backup: data.phone_backup||'', email: data.email||'', tax_id: data.tax_id||'', 
         branch_type: data.branch_type || 'สำนักงานใหญ่',
         branch_code: data.branch_code || '',
+        parent_id: data.parent_id || '',
         address_line: data.address_line || data.address || '',
         subdistrict: data.subdistrict||'', district: data.district||'', province: data.province||'', zipcode: data.zipcode||'',
         image_url: data.image_url||''
@@ -140,9 +155,15 @@ export default function CustomerForm() {
 
     const reader = new FileReader()
     reader.onload = () => {
-      setTempImage(reader.result)
-      setCropModal(true)
-      setSelectorModal(false)
+      const result = reader.result
+      if (result) {
+        setTempImage(result)
+        setCropModal(true)
+        setSelectorModal(false)
+      }
+    }
+    reader.onerror = () => {
+      toast.error('ไม่สามารถอ่านไฟล์รูปภาพได้')
     }
     reader.readAsDataURL(file)
   }
@@ -167,6 +188,11 @@ export default function CustomerForm() {
   async function handleSave(e) {
     e.preventDefault()
     if (!form.name.trim()) return toast.error('กรุณากรอกชื่อลูกค้า')
+    if (!isEdit && form.branch_type === 'สาขา') {
+      toast.error('กรุณาสร้าง "สำนักงานใหญ่" ก่อน แล้วค่อยเพิ่มสาขาในภายหลัง', { icon: '🏢' })
+      setSaving(false)
+      return
+    }
     setSaving(true)
     const uid = getCookie('userId')
     
@@ -197,6 +223,7 @@ export default function CustomerForm() {
         tax_id: form.tax_id,
         branch_type: form.branch_type,
         branch_code: form.branch_code,
+        parent_id: form.parent_id || null,
         image_url: finalImageUrl,
         address: `${form.address_line} ${form.subdistrict} ${form.district} ${form.province} ${form.zipcode}`.trim(),
         address_line: form.address_line,
@@ -249,69 +276,81 @@ export default function CustomerForm() {
 
   return (
     <div className="animate-fadeIn max-w-4xl mx-auto pb-10">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/customers')} className="p-2.5 rounded-xl hover:bg-gray-100 transition-colors"><ArrowLeft size={22} /></button>
-        <h2 className="text-2xl font-black text-gray-800 tracking-tight">{isEdit ? '✏️ แก้ไขข้อมูลลูกค้า' : '➕ เพิ่มลูกค้าใหม่'}</h2>
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <button onClick={() => navigate('/customers')} className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 transition-colors"><ArrowLeft size={20} sm:size={22} /></button>
+        <h2 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">{isEdit ? '✏️ แก้ไขข้อมูลลูกค้า' : '➕ เพิ่มลูกค้าใหม่'}</h2>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left Column: Profile Image */}
           <div className="md:col-span-1">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 flex flex-col items-center sticky top-24">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl sm:rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 flex flex-col items-center sticky top-24">
               <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageChange} />
               <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleImageChange} />
               
-              <div onClick={() => setSelectorModal(true)} className={`relative w-32 h-32 rounded-full border-4 flex items-center justify-center cursor-pointer overflow-hidden transition-all shadow-lg ${preview ? 'border-brand-500' : 'border-gray-100 bg-gray-50 hover:border-brand-200'}`}>
+              <div onClick={() => setSelectorModal(true)} className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 flex items-center justify-center cursor-pointer overflow-hidden transition-all shadow-lg ${preview ? 'border-brand-500' : 'border-gray-100 bg-gray-50 hover:border-brand-200'}`}>
                 {compressing ? (
                   <LoadingSpinner />
                 ) : preview ? (
                   <img src={preview} alt="Profile" className="w-full h-full object-cover transition-transform hover:scale-110" />
                 ) : (
                   <div className="text-gray-300 flex flex-col items-center">
-                    <Camera size={40} strokeWidth={1.5} />
-                    <span className="text-[10px] font-black uppercase mt-1">Add Photo</span>
+                    <Camera size={32} sm:size={40} strokeWidth={1.5} />
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase mt-1">Add Photo</span>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/0 hover:bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-all">
-                  <Upload size={24} className="text-white" />
+                  <Upload size={20} sm:size={24} className="text-white" />
                 </div>
               </div>
-              <div className="text-center mt-4">
-                <p className="text-sm font-black text-gray-800">รูปภาพลูกค้า</p>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Profile Photo</p>
+              <div className="text-center mt-3 sm:mt-4">
+                <p className="text-xs sm:text-sm font-black text-gray-800">รูปภาพลูกค้า</p>
+                <p className="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Profile Photo</p>
               </div>
             </div>
           </div>
 
           {/* Right Column: General Info */}
-          <div className="md:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-1.5 h-6 bg-brand-600 rounded-full" />
-                <h3 className="font-black text-lg text-gray-800">ข้อมูลทั่วไป</h3>
+          <div className="md:col-span-2 space-y-4 sm:space-y-6">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl sm:rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                <div className="w-1.5 h-5 sm:h-6 bg-brand-600 rounded-full" />
+                <h3 className="font-black text-base sm:text-lg text-gray-800">ข้อมูลทั่วไป</h3>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">ชื่อลูกค้า/ร้านค้า *</label>
+                <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">ชื่อลูกค้า/ร้านค้า *</label>
                 <input type="text" value={form.name} onChange={e=>upd('name',e.target.value)} placeholder="เช่น ร้านสมชาย" className={inputCls}/>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">ประเภทสำนักงาน</label>
+                  <label className="block text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">ประเภทสำนักงาน</label>
                   <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-100">
                     <button 
                       type="button"
-                      onClick={() => upd('branch_type', 'สำนักงานใหญ่')}
-                      className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${form.branch_type === 'สำนักงานใหญ่' ? 'bg-white shadow-md text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}
+                      onClick={() => {
+                        upd('branch_type', 'สำนักงานใหญ่')
+                        upd('parent_id', '')
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all ${form.branch_type === 'สำนักงานใหญ่' ? 'bg-white shadow-md text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
                       🏢 สนญ.
                     </button>
                     <button 
                       type="button"
-                      onClick={() => upd('branch_type', 'สาขา')}
-                      className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${form.branch_type === 'สาขา' ? 'bg-white shadow-md text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}
+                      onClick={() => {
+                        if (!isEdit) {
+                          toast.error('กรุณาสร้าง "สำนักงานใหญ่" ก่อน แล้วค่อยเพิ่มสาขาในภายหลังที่หน้าจัดการลูกค้า', {
+                            icon: '🏢',
+                            duration: 5000
+                          })
+                        } else {
+                          upd('branch_type', 'สาขา')
+                        }
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all ${form.branch_type === 'สาขา' ? 'bg-white shadow-md text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
                       🏬 สาขา
                     </button>
@@ -320,88 +359,107 @@ export default function CustomerForm() {
 
                 {form.branch_type === 'สาขา' && (
                   <div className="animate-scaleIn">
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">รหัส/ชื่อสาขา</label>
+                    <label className="block text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">รหัส/ชื่อสาขา</label>
                     <input type="text" value={form.branch_code} onChange={e=>upd('branch_code',e.target.value)} placeholder="0001 หรือ บางนา" className={inputCls}/>
                   </div>
                 )}
               </div>
+
+              {form.branch_type === 'สาขา' && isEdit && (
+                <div className="animate-scaleIn">
+                  <label className="block text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">สำนักงานใหญ่ / บริษัทแม่</label>
+                  <select 
+                    value={form.parent_id} 
+                    onChange={e => upd('parent_id', e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">-- เลือกบริษัทแม่ (ถ้ามี) --</option>
+                    {allCustomers
+                      .filter(c => c.branch_type === 'สำนักงานใหญ่')
+                      .map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* ติดต่อ */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-1.5 h-6 bg-brand-600 rounded-full" />
-                <h3 className="font-black text-lg text-gray-800">การติดต่อ & ภาษี</h3>
+            <div className="bg-white p-5 sm:p-6 rounded-3xl sm:rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                <div className="w-1.5 h-5 sm:h-6 bg-brand-600 rounded-full" />
+                <h3 className="font-black text-base sm:text-lg text-gray-800">การติดต่อ & ภาษี</h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">เบอร์โทรศัพท์หลัก</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">เบอร์โทรศัพท์หลัก</label>
                   <input type="text" value={form.phone} maxLength={10} onChange={e=>upd('phone', e.target.value.replace(/[^0-9]/g, ''))} placeholder="08XXXXXXXX" className={inputCls}/>
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">เบอร์โทรสำรอง</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">เบอร์โทรสำรอง</label>
                   <input type="text" value={form.phone_backup} maxLength={10} onChange={e=>upd('phone_backup', e.target.value.replace(/[^0-9]/g, ''))} placeholder="08XXXXXXXX" className={inputCls}/>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex items-center justify-between">
-                    อีเมล <span className="text-[8px] bg-warning-100 text-warning-700 px-1.5 py-0.5 rounded-md">REQUIRED FOR E-BILL</span>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1 flex items-center justify-between">
+                    อีเมล <span className="text-[7px] sm:text-[8px] bg-warning-100 text-warning-700 px-1.5 py-0.5 rounded-md">REQUIRED FOR E-BILL</span>
                   </label>
-                  <input type="email" value={form.email} onChange={e=>upd('email',e.target.value)} placeholder="example@email.com" className="w-full px-4 py-3.5 border-2 border-warning-100 bg-warning-50/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold" />
+                  <input type="email" value={form.email} onChange={e=>upd('email',e.target.value)} placeholder="example@email.com" className="w-full px-4 py-3 sm:py-3.5 border-2 border-warning-100 bg-warning-50/10 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold text-sm sm:text-base" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">เลขประจำตัวผู้เสียภาษี</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">เลขประจำตัวผู้เสียภาษี</label>
                   <input type="text" value={form.tax_id} onChange={e=>upd('tax_id',e.target.value)} placeholder="13 หลัก" className={inputCls}/>
                 </div>
               </div>
             </div>
 
             {/* ที่อยู่ */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-1.5 h-6 bg-brand-600 rounded-full" />
-                <h3 className="font-black text-lg text-gray-800">ที่อยู่จัดส่ง / ที่อยู่หลัก</h3>
+            <div className="bg-white p-5 sm:p-6 rounded-3xl sm:rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                <div className="w-1.5 h-5 sm:h-6 bg-brand-600 rounded-full" />
+                <h3 className="font-black text-base sm:text-lg text-gray-800">ที่อยู่จัดส่ง / ที่อยู่หลัก</h3>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">ที่อยู่ (บ้านเลขที่ / ซอย / ถนน)</label>
+                <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">ที่อยู่ (บ้านเลขที่ / ซอย / ถนน)</label>
                 <input type="text" value={form.address_line} onChange={e=>upd('address_line',e.target.value)} placeholder="ระบุเลขที่บ้านและถนน" className={inputCls}/>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">แขวง / ตำบล</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">แขวง / ตำบล</label>
                   <input type="text" value={form.subdistrict} onChange={e=>upd('subdistrict',e.target.value)} className={inputCls}/>
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">เขต / อำเภอ</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">เขต / อำเภอ</label>
                   <input type="text" value={form.district} onChange={e=>upd('district',e.target.value)} className={inputCls}/>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">จังหวัด</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">จังหวัด</label>
                   <input type="text" value={form.province} onChange={e=>upd('province',e.target.value)} className={inputCls}/>
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">รหัสไปรษณีย์</label>
+                  <label className="block text-[9px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-1.5 ml-1">รหัสไปรษณีย์</label>
                   <input type="text" value={form.zipcode} onChange={e=>upd('zipcode',e.target.value)} className={inputCls}/>
                 </div>
               </div>
             </div>
 
-            <button type="submit" disabled={saving || compressing} className="w-full py-5 bg-brand-600 hover:bg-brand-700 text-white text-xl font-black rounded-3xl shadow-xl shadow-brand-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-              {saving ? <div className="w-7 h-7 border-4 border-white/30 border-t-white rounded-full animate-spin"/> : <><Save size={24}/>บันทึกข้อมูลลูกค้า</>}
+            <button type="submit" disabled={saving || compressing} className="w-full py-4 sm:py-5 bg-brand-600 hover:bg-brand-700 text-white text-lg sm:text-xl font-black rounded-2xl sm:rounded-3xl shadow-xl shadow-brand-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
+              {saving ? <div className="w-6 h-6 sm:w-7 sm:h-7 border-4 border-white/30 border-t-white rounded-full animate-spin"/> : <><Save size={20} sm:size={24}/>บันทึกข้อมูลลูกค้า</>}
             </button>
           </div>
         </div>
       </form>
 
-      {isEdit && (
+      {isEdit && form.branch_type === 'สำนักงานใหญ่' && (
         <div className="mt-8 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4 border-b pb-3">
             <h3 className="text-lg font-bold">🏪 สาขา ({branches.length})</h3>

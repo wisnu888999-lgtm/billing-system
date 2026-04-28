@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+/* ===== Custom Theme ===== */
+@theme {
+  --font-sans: 'Noto Sans Thai', sans-serif;
+
+  /* Brand Colors */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  --color-surface: #f8fafc;
+  --color-surface-card: #ffffff;
+  --color-surface-dark: #0f172a;
+}
+
+/* ===== Base Styles ===== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Noto Sans Thai', sans-serif;
+  background-color: var(--color-surface);
+  color: #1e293b;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* ===== Bottom Nav Safe Area ===== */
+#root {
+  min-height: 100dvh;
+  padding-bottom: 80px;
+}
+
+/* ===== Input/Button Base ===== */
+input, select, textarea {
+  font-family: 'Noto Sans Thai', sans-serif;
+  font-size: 1rem;
+}
+
+/* ===== Animation Keyframes ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
+}
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-popIn {
+  animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* TikTok-style Glow Animation */
+@keyframes tiktok-glow {
+  0% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); border-color: #ef4444; }
+  33% { box-shadow: 0 0 12px rgba(37, 99, 235, 0.4); border-color: #2563eb; }
+  66% { box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); border-color: #a855f7; }
+  100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); border-color: #ef4444; }
+}
+
+.glow-card {
+  animation: tiktok-glow 4s infinite linear !important;
+  border-width: 2px !important;
+}
+
+/* --- PREMIUM FLAME EFFECT (ORGANIC) --- */
+.fire-wrapper {
+  position: absolute;
+  inset: -15px; /* Even more compact */
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Base Flame Shape - Sharper & More Balanced */
+.fire-particle {
+  position: absolute;
+  border-radius: 50% 50% 35% 35% / 80% 80% 20% 20%;
+  transform-origin: center center;
+  filter: blur(5px); /* Reduced blur for balance */
+  animation: fire-flicker 1.5s infinite alternate ease-in-out;
+  mix-blend-mode: plus-lighter;
+}
+
+/* Layered Colors & Sizes (Compact for Mobile Balance) */
+.flame-red .fire-particle:nth-child(1) { width: 68px; height: 95px; background: radial-gradient(circle, #ff2200 40%, transparent 85%); opacity: 0.4; animation-duration: 1.8s; }
+.flame-red .fire-particle:nth-child(2) { width: 55px; height: 75px; background: radial-gradient(circle, #ff7700 45%, transparent 90%); opacity: 0.6; animation-duration: 1.4s; animation-delay: -0.4s; }
+.flame-red .fire-particle:nth-child(3) { width: 42px; height: 55px; background: radial-gradient(circle, #ffaa00 50%, transparent 100%); opacity: 0.8; animation-duration: 1.1s; animation-delay: -0.7s; }
+.flame-red .fire-particle:nth-child(4) { width: 22px; height: 35px; background: #ffffaa; opacity: 1; animation-duration: 0.8s; animation-delay: -1.1s; filter: blur(3px); }
+
+.flame-blue .fire-particle:nth-child(1) { width: 68px; height: 95px; background: radial-gradient(circle, #0022ff 40%, transparent 85%); opacity: 0.4; animation-duration: 1.8s; }
+.flame-blue .fire-particle:nth-child(2) { width: 55px; height: 75px; background: radial-gradient(circle, #0077ff 45%, transparent 90%); opacity: 0.6; animation-duration: 1.4s; animation-delay: -0.4s; }
+.flame-blue .fire-particle:nth-child(3) { width: 42px; height: 55px; background: radial-gradient(circle, #00aaff 50%, transparent 100%); opacity: 0.8; animation-duration: 1.1s; animation-delay: -0.7s; }
+.flame-blue .fire-particle:nth-child(4) { width: 22px; height: 35px; background: #aaffff; opacity: 1; animation-duration: 0.8s; animation-delay: -1.1s; filter: blur(3px); }
+
+/* 💜 VIOLENT PURPLE CHAMPION FLAME (Void Power) */
+.flame-purple .fire-particle:nth-child(1) { width: 85px; height: 120px; background: radial-gradient(circle, #a855f7 40%, transparent 85%); opacity: 0.6; animation-duration: 0.8s; }
+.flame-purple .fire-particle:nth-child(2) { width: 70px; height: 95px; background: radial-gradient(circle, #d946ef 45%, transparent 90%); opacity: 0.8; animation-duration: 0.6s; animation-delay: -0.2s; }
+.flame-purple .fire-particle:nth-child(3) { width: 55px; height: 75px; background: radial-gradient(circle, #818cf8 50%, transparent 100%); opacity: 1; animation-duration: 0.5s; animation-delay: -0.4s; }
+.flame-purple .fire-particle:nth-child(4) { width: 35px; height: 50px; background: #fff; opacity: 1; animation-duration: 0.4s; animation-delay: -0.6s; filter: blur(2px); }
+
+@keyframes violent-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-2px, 2px) rotate(-1.2deg); }
+  50% { transform: translate(2px, -2px) rotate(1.2deg); }
+  75% { transform: translate(-2px, -2px) rotate(-1.2deg); }
+  100% { transform: translate(2px, 2px) rotate(1.2deg); }
+}
+
+.champion-shake {
+  animation: violent-shake 0.08s infinite !important; /* Extremely violent */
+}
+
+@keyframes fire-flicker {
+  0% { transform: scale(1) translateY(0) rotate(-4deg); opacity: 0.7; }
+  50% { transform: scale(1.1) translateY(-8px) rotate(2deg); opacity: 1; }
+  100% { transform: scale(0.9) translateY(-3px) rotate(-2deg); opacity: 0.8; }
+}
+
+/* Sparks - More discrete */
+.fire-wrapper::after {
+  content: ''; position: absolute; inset: -15px;
+  background-image: radial-gradient(circle, #fff 1.2px, transparent 1.2px);
+  background-size: 30px 30px;
+  animation: sparks-fly 2s linear infinite;
+  opacity: 0.4;
+}
+@keyframes sparks-fly {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.8; }
+  100% { transform: translateY(-100px) rotate(15deg); opacity: 0; }
+}
+
+/* --- INACTIVITY EFFECTS (DIGITAL DECAY) --- */
+@keyframes ghost-pulse {
+  0% { opacity: 0.05; transform: translate(0, 0); }
+  50% { opacity: 0.15; transform: translate(5px, -5px); }
+  100% { opacity: 0.05; transform: translate(0, 0); }
+}
+
+.effect-broken {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%) !important;
+  color: #eee !important;
+  border-color: #333 !important;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.effect-broken::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 2px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.effect-broken::after {
+  content: '👻'; position: absolute; right: 15px; top: 15px; font-size: 32px;
+  animation: ghost-pulse 4s infinite ease-in-out;
+  filter: grayscale(1) blur(1px);
+  z-index: 2;
+}
+
+.effect-broken h3 {
+  color: #fff !important;
+  text-shadow: 0 0 10px rgba(255,255,255,0.4);
+  position: relative;
+  z-index: 5;
+}
+
+.effect-broken p {
+  color: #aaa !important;
+  position: relative;
+  z-index: 5;
+}
+
+.effect-broken img {
+  filter: grayscale(1) contrast(1.2) brightness(0.5);
+  opacity: 0.4;
+}
+
+.effect-rust {
+  background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%) !important;
+  border: 1px solid #d4a373 !important;
+  position: relative;
+}
+
+.effect-rust::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(#d4a373 0.5px, transparent 0.5px);
+  background-size: 10px 10px;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.effect-dust {
+  background: #fafafa !important;
+  opacity: 0.85;
+  filter: grayscale(0.5) contrast(0.9);
+}
+
+/* --- PREMIUM CARD ENHANCEMENTS --- */
+.customer-card {
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.customer-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+}
+
+.glow-card {
+  border-width: 2px !important;
+  animation: tiktok-glow 4s infinite linear !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+}

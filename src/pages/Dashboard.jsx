@@ -53,9 +53,11 @@ export default function Dashboard() {
 
   const summaryCards = [
     { label: 'ยอดรวมทั้งหมด', value: formatCurrency(data.totalAmount), icon: TrendingUp, color: 'from-brand-500 to-brand-700' },
+    { label: 'กำไรสุทธิ', value: formatCurrency(data.totalProfit), icon: TrendingUp, color: 'from-success-600 to-success-800' },
+    { label: 'อัตรากำไร', value: data.totalAmount > 0 ? ((data.totalProfit / data.totalAmount) * 100).toFixed(1) + '%' : '0%', icon: TrendingUp, color: 'from-indigo-500 to-indigo-700' },
     { label: 'รอชำระ', value: formatCurrency(data.totalPending), icon: Clock, color: 'from-warning-500 to-warning-600' },
     { label: 'เกินกำหนด', value: formatCurrency(data.totalOverdue), icon: AlertTriangle, color: 'from-danger-500 to-danger-700' },
-    { label: 'จำนวนบิล', value: data.invoiceCount, icon: FileText, color: 'from-success-500 to-success-700' },
+    { label: 'จำนวนบิล', value: data.invoiceCount, icon: FileText, color: 'from-gray-500 to-gray-700' },
   ]
 
   const activeFiltersCount = Object.values(filters).filter(v => v !== '').length
@@ -116,7 +118,7 @@ export default function Dashboard() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
         {summaryCards.map((card, i) => (
           <div key={i} className={`bg-gradient-to-br ${card.color} rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-5 text-white shadow-lg relative overflow-hidden group`}>
             <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-125 transition-transform duration-500">

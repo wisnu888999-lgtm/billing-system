@@ -269,6 +269,7 @@ export default function InvoiceWizard() {
         product_name: i.product.name,
         qty: i.qty,
         price_per_unit: i.product.price,
+        cost_per_unit: i.product.cost || 0,
         total_price: i.total,
       }))
 

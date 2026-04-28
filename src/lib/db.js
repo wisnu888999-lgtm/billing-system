@@ -510,6 +510,7 @@ export async function createInvoice(invoice, items) {
   const itemsWithInvoice = items.map(item => ({
     ...item,
     invoice_id: inv.id,
+    cost_per_unit: item.cost_per_unit || 0, // Ensure cost is saved
   }))
   const { error: itemsErr } = await supabase
     .from('invoice_items')
@@ -645,7 +646,11 @@ export async function updateInvoice(invoiceId, newInvoiceData, newItems) {
   if (updateErr) return handleError(updateErr)
 
   // 5. Insert new items and deduct stock
-  const itemsWithInvoice = newItems.map(item => ({ ...item, invoice_id: invoiceId }))
+  const itemsWithInvoice = newItems.map(item => ({ 
+    ...item, 
+    invoice_id: invoiceId,
+    cost_per_unit: item.cost_per_unit || 0
+  }))
   await supabase.from('invoice_items').insert(itemsWithInvoice)
 
   for (const item of newItems) {
@@ -717,6 +722,28 @@ export async function getDashboardData(filters = {}) {
   const totalOverdue = (invoices || []).filter(i => i.status === 'overdue' || (i.status === 'pending' && i.due_date < today)).reduce((sum, i) => sum + Number(i.total), 0)
   const invoiceCount = (invoices || []).length
 
+  // 1.1 Profit Calculation
+  let totalProfit = 0
+  let totalCost = 0
+  const invoiceIds = (invoices || []).map(i => i.id)
+  if (invoiceIds.length > 0) {
+    const { data: items } = await supabase
+      .from('invoice_items')
+      .select('qty, price_per_unit, cost_per_unit')
+      .in('invoice_id', invoiceIds)
+    
+    ;(items || []).forEach(item => {
+      const revenue = Number(item.price_per_unit) * item.qty
+      const cost = Number(item.cost_per_unit) * item.qty
+      totalCost += cost
+      totalProfit += (revenue - cost)
+    })
+
+    // Subtract discounts from total profit to get Net Profit
+    const totalDiscounts = (invoices || []).reduce((sum, i) => sum + Number(i.discount_amount), 0)
+    totalProfit -= totalDiscounts
+  }
+
   // 2. Sales Trend (by Date)
   const trendMap = {}
   ;(invoices || []).forEach(inv => {
@@ -780,6 +807,8 @@ export async function getDashboardData(filters = {}) {
     totalAmount,
     totalPending,
     totalOverdue,
+    totalProfit,
+    totalCost,
     invoiceCount,
     salesTrend,
     statusDistribution,

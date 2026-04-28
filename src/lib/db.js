@@ -783,7 +783,6 @@ export async function getDashboardData(filters = {}) {
     .slice(0, 10)
 
   // 5. Top Selling Products
-  const invoiceIds = (invoices || []).map(i => i.id)
   let topProducts = []
   if (invoiceIds.length > 0) {
     const { data: items } = await supabase

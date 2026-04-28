@@ -458,7 +458,7 @@ export default function InvoiceWizard() {
 
           {/* Cart Summary Bar */}
           {cartItems.length > 0 && (
-            <div className="fixed bottom-[64px] left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-15px_30px_rgba(0,0,0,0.1)] px-4 py-4 z-40 animate-slideUp">
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-15px_30px_rgba(0,0,0,0.1)] px-4 py-4 z-40 animate-slideUp">
               <div className="max-w-4xl mx-auto flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{cartItems.length} รายการ</span>

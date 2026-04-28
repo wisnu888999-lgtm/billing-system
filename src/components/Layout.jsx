@@ -60,8 +60,9 @@ export default function Layout() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="flex justify-around items-end max-w-5xl mx-auto h-16 pb-2 px-2">
+      {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          <div className="flex justify-around items-end max-w-5xl mx-auto h-16 pb-2 px-2">
           {navItems.map(item => {
             if (item.isCenter) {
               return (
@@ -109,7 +110,8 @@ export default function Layout() {
             )
           })}
         </div>
-      </nav>
+        </nav>
+      )}
     </div>
   )
 }

@@ -97,12 +97,25 @@ export default function InvoiceDetail() {
       {/* Items */}
       <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
         <h3 className="font-bold mb-3 text-gray-800">📦 รายการสินค้า</h3>
-        {(invoice.invoice_items || []).map((item, i) => (
-          <div key={i} className="flex justify-between py-2 border-b border-gray-50 last:border-0">
-            <div><p className="font-medium text-sm text-gray-800">{item.product_name}</p><p className="text-xs text-gray-500 mt-0.5">x{item.qty} · {formatCurrency(item.price_per_unit)} / หน่วย</p></div>
-            <p className="font-bold text-sm text-gray-800">{formatCurrency(item.total_price)}</p>
-          </div>
-        ))}
+        {(invoice.invoice_items || []).map((item, i) => {
+          const profit = (Number(item.price_per_unit) - Number(item.cost_per_unit || 0)) * item.qty
+          return (
+            <div key={i} className="flex justify-between py-2 border-b border-gray-50 last:border-0">
+              <div className="min-w-0 pr-4">
+                <p className="font-medium text-sm text-gray-800 truncate">{item.product_name}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-xs text-gray-500">x{item.qty} · {formatCurrency(item.price_per_unit)} / หน่วย</p>
+                  {isAdmin && (
+                    <span className="text-[10px] font-bold text-success-600 bg-success-50 px-1.5 py-0.5 rounded">
+                      กำไร {formatCurrency(profit)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <p className="font-bold text-sm text-gray-800 shrink-0">{formatCurrency(item.total_price)}</p>
+            </div>
+          )
+        })}
       </div>
 
       {/* Totals */}
@@ -110,6 +123,18 @@ export default function InvoiceDetail() {
         <div className="flex justify-between text-sm"><span className="text-gray-500">ราคาก่อนลด</span><span>{formatCurrency(invoice.subtotal)}</span></div>
         {Number(invoice.discount_amount) > 0 && <div className="flex justify-between text-sm"><span className="text-danger-600">ส่วนลด</span><span className="text-danger-600">-{formatCurrency(invoice.discount_amount)}</span></div>}
         {invoice.vat_enabled && <div className="flex justify-between text-sm"><span className="text-gray-500">VAT 7%</span><span>+{formatCurrency(invoice.vat_amount)}</span></div>}
+        
+        {isAdmin && (
+          <div className="flex justify-between text-sm pt-1 bg-success-50/50 -mx-4 px-4 py-2 border-y border-success-100">
+            <span className="text-success-700 font-bold">กำไรสุทธิของบิลนี้</span>
+            <span className="text-success-700 font-black">
+              {formatCurrency(
+                (invoice.invoice_items || []).reduce((sum, item) => sum + (Number(item.price_per_unit) - Number(item.cost_per_unit || 0)) * item.qty, 0) - Number(invoice.discount_amount)
+              )}
+            </span>
+          </div>
+        )}
+
         <div className="flex justify-between pt-2 border-t border-gray-200">
           <span className="text-base sm:text-lg font-bold text-gray-800">ยอดรวมทั้งสิ้น</span>
           <span className="text-xl sm:text-2xl font-bold text-brand-700 tabular-nums">{formatCurrency(invoice.total)}</span>

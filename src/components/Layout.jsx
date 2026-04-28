@@ -32,20 +32,22 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)]">
-      {/* Top Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-brand-700 to-brand-900 text-white shadow-lg">
-        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 max-w-7xl mx-auto">
-          <div>
+      {/* Top Header (Mobile Only or Header Content) */}
+      <header className={`fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-brand-700 to-brand-900 text-white shadow-lg transition-all duration-300 ${!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) ? 'md:left-64' : ''}`}>
+        <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 w-full">
+          <div className="md:hidden">
             <h1 className="text-base sm:text-lg font-bold tracking-tight whitespace-nowrap">
-              <span className="inline sm:hidden">📋 วางบิล</span>
-              <span className="hidden sm:inline">📋 ระบบวางบิล</span>
+              📋 ระบบวางบิล
             </h1>
           </div>
+          <div className="hidden md:block">
+            {/* Breadcrumb or Page Title can go here in the future */}
+          </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-[11px] sm:text-sm opacity-90 bg-white/15 px-2.5 sm:px-3 py-1 rounded-full hidden xs:block">{userName}</span>
+            <span className="text-[11px] sm:text-sm opacity-90 bg-white/15 px-2.5 sm:px-3 py-1 rounded-full hidden xs:block md:hidden">{userName}</span>
             <button
               onClick={handleLogout}
-              className="p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors"
+              className="p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors md:hidden"
               title="ออกจากระบบ"
             >
               <LogOut size={18} className="sm:w-5 sm:h-5" />
@@ -54,14 +56,76 @@ export default function Layout() {
         </div>
       </header>
 
+      {/* Sidebar for Desktop */}
+      {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
+        <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-100 flex-col z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] sidebar-glass">
+          <div className="p-6">
+            <h1 className="text-2xl font-black text-brand-700 tracking-tight flex items-center gap-2">
+              <span className="text-3xl">📋</span> วางบิล
+            </h1>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1 ml-11">Management System</p>
+          </div>
+
+          <nav className="flex-1 px-4 py-4 space-y-2">
+            {navItems.map(item => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={(e) => handleNavClick(e, item.to)}
+                end={item.to === '/invoices'}
+                className={({ isActive }) =>
+                  `flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group nav-active-glow ${
+                    isActive
+                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.8} className={`${isActive ? 'scale-110' : 'group-hover:scale-110 transition-transform'}`} />
+                    <span className={`text-sm font-bold ${isActive ? 'tracking-wide' : ''}`}>{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="p-4 mt-auto border-t border-gray-50 space-y-2">
+            <div className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-2xl">
+              <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg">
+                {userName.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-800 truncate">{userName}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Active User</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-5 py-3.5 text-danger-500 hover:bg-danger-50 rounded-2xl transition-all font-bold text-sm"
+            >
+              <LogOut size={18} />
+              <span>ออกจากระบบ</span>
+            </button>
+          </div>
+        </aside>
+      )}
+
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-4 pt-20">
-        <Outlet />
+      <main className={`min-h-[calc(100vh-80px)] px-4 sm:px-8 py-6 pt-24 transition-all duration-300 ${!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) ? 'md:pl-64' : ''}`}>
+        <div className={`w-full ${
+          (location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit')))
+            ? 'max-w-5xl mx-auto'
+            : ''
+        }`}>
+          <Outlet />
+        </div>
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation (Mobile Only) */}
       {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
           <div className="flex justify-around items-end max-w-5xl mx-auto h-16 pb-2 px-2">
           {navItems.map(item => {
             if (item.isCenter) {

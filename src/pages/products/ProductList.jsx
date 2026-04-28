@@ -229,194 +229,267 @@ export default function ProductList() {
   function handlePriceKeyDown(e, p) { if (e.key === 'Enter') savePrice(p); if (e.key === 'Escape') setEditingPrice(null) }
 
   return (
-    <div className="space-y-4 animate-fadeIn pb-10">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">📦 สินค้า</h2>
-        {!isSelectMode ? (
-          <div className="flex items-center gap-2">
-            <button onClick={() => navigate('/products/recycle-bin')} className="p-3 text-gray-400 hover:text-danger-500 hover:bg-danger-50 rounded-2xl transition-all active:scale-95">
-              <Trash2 size={22} />
-            </button>
-            <button onClick={() => navigate('/products/new')} className="flex items-center gap-2 px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-md active:scale-95 transition-all">
-              <Plus size={20} />เพิ่มสินค้า
-            </button>
+    <div className="animate-fadeIn min-h-screen bg-[var(--color-surface)]">
+      {/* Search & Top Actions (Sticky) */}
+      <div className="sticky top-16 md:top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-3">
+        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-black text-gray-800 tracking-tight hidden lg:block">📦 สินค้า</h2>
+            <div className="w-full md:w-80 lg:w-96">
+              <SearchBar value={search} onChange={setSearch} placeholder="ค้นหาชื่อสินค้า..." />
+            </div>
           </div>
-        ) : (
+
           <div className="flex items-center gap-2">
-            <button onClick={selectAll} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-2xl transition-all">
-              {selected.size === filtered.length ? 'ยกเลิกทั้งหมด' : 'เลือกทั้งหมด'}
-            </button>
-            <button onClick={() => { setSelected(new Set()); setSelectionMode(false) }} className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl transition-all">
-              <X size={20} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Search and Filter Row */}
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder="ค้นหาชื่อสินค้า..." />
-        </div>
-        <button onClick={() => setIsFilterModalOpen(true)} className="px-4 py-2 bg-white border border-gray-200 rounded-2xl shadow-sm text-gray-700 flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-all">
-          <Filter size={18} />
-          <span className="text-sm font-semibold hidden sm:inline">คัดกรอง</span>
-        </button>
-      </div>
-
-      {/* Selection Mode Hint */}
-      {!selectionMode && !loading && filtered.length > 0 && (
-        <div className="flex items-center gap-2 text-[10px] text-gray-400 px-1 select-none font-bold uppercase tracking-widest animate-fadeIn">
-          <span className="hidden sm:inline">💡 Ctrl+คลิก หรือ กดค้าง เพื่อเลือกหลายรายการ</span>
-          <span className="sm:hidden">💡 กดค้างที่รูป เพื่อเลือกหลายรายการ</span>
-        </div>
-      )}
-
-      {loading ? <LoadingSpinner /> : filtered.length === 0 ? (
-        <EmptyState icon={Package} title="ไม่พบสินค้า" />
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
-          {filtered.map((p, index) => {
-            const isSel = selected.has(p.id)
-            const stat = salesStats[p.id]
-            return (
-              <div key={p.id} className={`bg-white rounded-2xl border-2 overflow-hidden transition-all relative ${isSel ? 'border-brand-500 shadow-md shadow-brand-100' : 'border-gray-100 shadow-sm hover:shadow-md'}`}>
-                
-                {/* Sales Badge */}
-                {stat && (
-                  <div className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-lg text-[10px] font-bold text-white shadow-sm flex items-center gap-1 ${stat.type === 'increase' ? 'bg-danger-500' : 'bg-brand-500'}`}>
-                    <Flame size={12} /> {stat.text}
-                  </div>
-                )}
-
-                {/* Square Image Area */}
-                <div 
-                  className={`relative w-full aspect-square bg-gray-50 cursor-pointer select-none transition-transform duration-200 active:scale-95 ${isSel ? 'scale-90' : ''}`}
-                  onClick={(e) => handleItemClick(e, p, index)}
-                  onPointerDown={() => handlePointerDown(p.id, index)}
-                  onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerUp}
-                  onContextMenu={(e) => e.preventDefault()}
+            {!isSelectMode ? (
+              <>
+                <div className="hidden sm:flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                  <button onClick={() => setSortBy('name_asc')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${sortBy === 'name_asc' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}>ชื่อ</button>
+                  <button onClick={() => setSortBy('sales_desc')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${sortBy === 'sales_desc' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}>ขายดี</button>
+                  <button onClick={() => setSortBy('price_desc')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${sortBy === 'price_desc' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}>ราคา</button>
+                </div>
+                {/* Mobile Filter Button */}
+                <button 
+                  onClick={() => setIsFilterModalOpen(true)}
+                  className="md:hidden p-2.5 bg-white border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 relative"
                 >
-                  {p.image_url ? (
-                    <img src={p.image_url} alt={p.name} className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${isSel ? 'opacity-40 scale-110 blur-[1px]' : 'opacity-100'}`} />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 text-gray-300">
-                      <ImageIcon size={40} />
-                    </div>
+                  <Filter size={20} />
+                  {(filterType || filterSize) && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-600 border-2 border-white rounded-full"></span>
                   )}
-                  {/* Select checkbox - Only show in selection mode or if selected */}
-                  {(selectionMode || isSel) && (
-                    <div className={`absolute top-2 left-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center transition-all shadow-lg animate-popIn ${isSel ? 'bg-brand-600 text-white' : 'bg-white/90 backdrop-blur-sm border-2 border-gray-200 text-transparent'}`}>
-                      <Check size={16} strokeWidth={4} />
-                    </div>
-                  )}
-                  {isSel && (
-                    <div className="absolute inset-0 border-4 border-brand-500 rounded-xl pointer-events-none z-20 shadow-[inset_0_0_20px_rgba(59,130,246,0.3)]" />
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-3 flex flex-col justify-between h-[110px]">
-                  <div>
-                    <div className="flex justify-between items-start gap-1">
-                      <h3 className="font-bold text-sm leading-tight line-clamp-2">{p.name}</h3>
-                      <button onClick={() => navigate(`/products/${p.id}`)} className="shrink-0 text-gray-400 hover:text-brand-600 p-1 -mr-1 -mt-1 rounded-md hover:bg-gray-100 transition-colors">
-                        <Pencil size={14} />
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-gray-400 mt-0.5 truncate">{p.animal_type} · {p.size} · {p.weight_g}g</p>
-                  </div>
-
-                  <div>
-                    {/* Price - tap to edit */}
-                    <div className="mt-1 flex items-center justify-between">
-                      <span className="text-[10px] sm:text-[11px] text-gray-400">ราคา</span>
-                      {editingPrice === p.id ? (
-                        <div className="flex items-center gap-0.5">
-                          <span className="text-xs text-gray-400">฿</span>
-                          <input ref={priceRef} type="number" step="0.01" value={tempPrice} onChange={e => setTempPrice(e.target.value)} onBlur={() => savePrice(p)} onKeyDown={e => handlePriceKeyDown(e, p)} className="w-14 sm:w-16 px-1 py-0.5 text-right text-xs sm:text-sm font-bold border-2 border-brand-400 rounded-lg focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                        </div>
-                      ) : (
-                        <button onClick={() => startEditPrice(p)} className="text-sm font-bold text-brand-600 hover:bg-brand-50 px-1 py-0.5 rounded-lg transition-all cursor-text tabular-nums">
-                          {formatCurrency(p.price)}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Stock - tap to edit */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] sm:text-[11px] text-gray-400">สต๊อก</span>
-                      {editingStock === p.id ? (
-                        <input ref={stockRef} type="number" value={tempStock} onChange={e => setTempStock(e.target.value)} onBlur={() => saveStock(p)} onKeyDown={e => handleStockKeyDown(e, p)} className="w-14 sm:w-16 px-1 py-0.5 text-right text-xs sm:text-sm font-bold border-2 border-brand-400 rounded-lg focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                      ) : (
-                        <button onClick={() => startEditStock(p)} className={`text-xs sm:text-base font-bold px-1 py-0.5 rounded-lg transition-all cursor-text hover:bg-gray-50 tabular-nums ${p.stock_qty < 10 ? 'text-danger-600' : 'text-success-600'}`}>
-                          {formatNumber(p.stock_qty)}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </button>
+                <button onClick={() => navigate('/products/recycle-bin')} className="p-2.5 text-gray-400 hover:text-danger-500 transition-all">
+                  <Trash2 size={20} />
+                </button>
+                <button onClick={() => navigate('/products/new')} className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-xl shadow-lg shadow-brand-500/20 active:scale-95 transition-all text-sm">
+                  <Plus size={18} />เพิ่มสินค้า
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-brand-600 mr-2">เลือก {selected.size} รายการ</span>
+                <button onClick={selectAll} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all">
+                  {selected.size === filtered.length ? 'ยกเลิก' : 'ทั้งหมด'}
+                </button>
+                <button onClick={() => { setSelected(new Set()); setSelectionMode(false) }} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all">
+                  <X size={18} />
+                </button>
               </div>
-            )
-          })}
+            )}
+          </div>
         </div>
-      )}
+      </div>
+
+      <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row min-h-[calc(100vh-120px)]">
+        {/* Category Sidebar (Left) - Hidden on Mobile */}
+        <aside className="hidden md:block w-56 lg:w-64 border-r border-gray-100 bg-white/50 p-4 sm:p-6 shrink-0">
+          <div className="sticky top-32">
+            <div className="mb-8">
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <Filter size={12} /> หมวดหมู่
+              </h3>
+              <nav className="space-y-1">
+                <button 
+                  onClick={() => setFilterType('')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${filterType === '' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`}
+                >
+                  <Package size={16} /> สินค้าทั้งหมด
+                </button>
+                {uniqueTypes.map(t => (
+                  <button 
+                    key={t}
+                    onClick={() => setFilterType(t)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${filterType === t ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`}
+                  >
+                    <span className="w-4 h-4 flex items-center justify-center opacity-70">🐾</span> {t}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            <div>
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">กรองตามขนาด</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => setFilterSize('')} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterSize === '' ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>All</button>
+                {uniqueSizes.map(s => (
+                  <button key={s} onClick={() => setFilterSize(s)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterSize === s ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>{s}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Product Grid (Main) */}
+        <section className="flex-1 p-4 sm:p-6 lg:p-8">
+          {loading ? (
+            <div className="h-64 flex items-center justify-center"><LoadingSpinner /></div>
+          ) : filtered.length === 0 ? (
+            <EmptyState icon={Package} title="ไม่พบสินค้าในหมวดหมู่นี้" />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6">
+              {filtered.map((p, index) => {
+                const isSel = selected.has(p.id)
+                const stat = salesStats[p.id]
+                return (
+                  <div key={p.id} className={`group bg-white rounded-2xl border-2 transition-all duration-300 relative flex flex-col ${isSel ? 'border-brand-500 shadow-xl shadow-brand-100 ring-4 ring-brand-50' : 'border-gray-50 shadow-sm hover:shadow-xl hover:border-white hover:-translate-y-1'}`}>
+                    
+                    {/* Sales Badge */}
+                    {stat && (
+                      <div className={`absolute top-3 right-3 z-10 px-2 py-1 rounded-lg text-[9px] font-black text-white shadow-sm flex items-center gap-1 ${stat.type === 'increase' ? 'bg-danger-500' : 'bg-brand-500'}`}>
+                        <Flame size={10} /> {stat.text}
+                      </div>
+                    )}
+
+                    {/* Product Image */}
+                    <div 
+                      className="relative w-full aspect-square bg-gray-50 rounded-xl m-1.5 overflow-hidden cursor-pointer select-none"
+                      onClick={(e) => handleItemClick(e, p, index)}
+                      onPointerDown={() => handlePointerDown(p.id, index)}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                      onContextMenu={(e) => e.preventDefault()}
+                    >
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${isSel ? 'opacity-40 blur-[1px]' : ''}`} />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-200"><ImageIcon size={40} strokeWidth={1} /></div>
+                      )}
+                      {/* Selection UI */}
+                      {(selectionMode || isSel) && (
+                        <div className={`absolute top-3 left-3 z-10 w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-lg animate-popIn ${isSel ? 'bg-brand-600 text-white' : 'bg-white/90 border-2 border-gray-200'}`}>
+                          {isSel && <Check size={14} strokeWidth={4} />}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="p-4 pt-2 flex flex-col flex-1">
+                      <div className="mb-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-bold text-sm text-gray-800 leading-snug line-clamp-2 h-10 group-hover:text-brand-600 transition-colors">{p.name}</h3>
+                          <button onClick={() => navigate(`/products/${p.id}`)} className="shrink-0 text-gray-300 hover:text-brand-600 p-1 rounded-lg hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100">
+                            <Pencil size={12} />
+                          </button>
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{p.animal_type} · {p.size}</p>
+                      </div>
+
+                      <div className="mt-auto space-y-2 pt-2 border-t border-gray-50">
+                        {/* Price Area */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-gray-300 uppercase tracking-tighter">Price</span>
+                          {editingPrice === p.id ? (
+                            <input ref={priceRef} type="number" step="0.01" value={tempPrice} onChange={e => setTempPrice(e.target.value)} onBlur={() => savePrice(p)} onKeyDown={e => handlePriceKeyDown(e, p)} className="w-16 px-2 py-1 text-right text-xs font-black border-2 border-brand-400 rounded-xl focus:outline-none" />
+                          ) : (
+                            <button onClick={() => startEditPrice(p)} className="text-sm font-black text-brand-600 hover:bg-brand-50 px-2 py-0.5 rounded-lg transition-all tabular-nums">
+                              {formatCurrency(p.price)}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Stock Area */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-gray-300 uppercase tracking-tighter">Stock</span>
+                          {editingStock === p.id ? (
+                            <input ref={stockRef} type="number" value={tempStock} onChange={e => setTempStock(e.target.value)} onBlur={() => saveStock(p)} onKeyDown={e => handleStockKeyDown(e, p)} className="w-16 px-2 py-1 text-right text-xs font-black border-2 border-brand-400 rounded-xl focus:outline-none" />
+                          ) : (
+                            <button onClick={() => startEditStock(p)} className={`text-xs font-black px-2 py-0.5 rounded-lg transition-all tabular-nums hover:bg-gray-50 ${p.stock_qty < 10 ? 'text-danger-600 bg-danger-50' : 'text-gray-700 bg-gray-50'}`}>
+                              {formatNumber(p.stock_qty)}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* Floating Delete Bar */}
       {isSelectMode && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 px-4 animate-slideUp">
-          <div className="bg-danger-600 text-white rounded-2xl shadow-xl px-5 py-3.5 flex items-center justify-between">
-            <span className="font-semibold">เลือก {selected.size} รายการ</span>
-            <button onClick={handleDeleteSelected} className="flex items-center gap-2 px-4 py-2 bg-white text-danger-600 font-bold rounded-xl hover:bg-danger-50 active:scale-95 transition-all">
-              <Trash2 size={18} />ลบ
+        <div className="fixed bottom-24 left-1/2 md:left-[calc(50%+128px)] -translate-x-1/2 w-full max-w-[480px] z-50 px-4 animate-slideUp">
+          <div className="bg-danger-600 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-70 leading-none mb-1">Selected</span>
+              <span className="text-lg font-black leading-none">{selected.size} รายการ</span>
+            </div>
+            <button onClick={handleDeleteSelected} className="flex items-center gap-2 px-6 py-2.5 bg-white text-danger-600 font-black rounded-lg hover:bg-danger-50 active:scale-95 transition-all text-sm shadow-lg">
+              <Trash2 size={18} /> ย้ายไปถังขยะ
             </button>
           </div>
         </div>
       )}
 
-      {/* Filter Modal */}
-      <Modal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} title="จัดเรียง & คัดกรอง" size="sm">
-        <div className="space-y-5">
+      {/* Filter Modal for Mobile */}
+      <Modal 
+        isOpen={isFilterModalOpen} 
+        onClose={() => setIsFilterModalOpen(false)} 
+        title="ตัวกรองสินค้า"
+      >
+        <div className="space-y-8 py-2">
           <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-2">จัดเรียงตาม</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setSortBy('name_asc')} className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${sortBy === 'name_asc' ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>ตัวอักษร (ก-ฮ)</button>
-              <button onClick={() => setSortBy('sales_desc')} className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${sortBy === 'sales_desc' ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>ยอดขายสูงสุด</button>
-              <button onClick={() => setSortBy('price_desc')} className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${sortBy === 'price_desc' ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>ราคาสูง-ต่ำ</button>
-              <button onClick={() => setSortBy('stock_asc')} className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${sortBy === 'stock_asc' ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>สต๊อกเหลือน้อย</button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-2">ประเภท</label>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => setFilterType('')} className={`py-1.5 px-3 rounded-full text-sm font-medium border transition-colors ${filterType === '' ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>ทั้งหมด</button>
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Filter size={14} /> หมวดหมู่
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              <button 
+                onClick={() => { setFilterType(''); setIsFilterModalOpen(false); }}
+                className={`flex items-center gap-3 px-4 py-4 rounded-2xl text-sm font-bold transition-all ${filterType === '' ? 'bg-brand-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+              >
+                <Package size={18} /> สินค้าทั้งหมด
+              </button>
               {uniqueTypes.map(t => (
-                <button key={t} onClick={() => setFilterType(t)} className={`py-1.5 px-3 rounded-full text-sm font-medium border transition-colors ${filterType === t ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>{t}</button>
+                <button 
+                  key={t}
+                  onClick={() => { setFilterType(t); setIsFilterModalOpen(false); }}
+                  className={`flex items-center gap-3 px-4 py-4 rounded-2xl text-sm font-bold transition-all ${filterType === t ? 'bg-brand-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+                >
+                  <span>🐾</span> {t}
+                </button>
               ))}
             </div>
           </div>
+
           <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-2">ขนาด</label>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => setFilterSize('')} className={`py-1.5 px-3 rounded-full text-sm font-medium border transition-colors ${filterSize === '' ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>ทั้งหมด</button>
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">ขนาด</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => { setFilterSize(''); setIsFilterModalOpen(false); }} 
+                className={`py-3 rounded-2xl text-xs font-black uppercase border-2 transition-all ${filterSize === '' ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-100 text-gray-500'}`}
+              >
+                All
+              </button>
               {uniqueSizes.map(s => (
-                <button key={s} onClick={() => setFilterSize(s)} className={`py-1.5 px-3 rounded-full text-sm font-medium border transition-colors ${filterSize === s ? 'bg-brand-50 border-brand-500 text-brand-700' : 'bg-white border-gray-200 text-gray-600'}`}>{s}</button>
+                <button 
+                  key={s} 
+                  onClick={() => { setFilterSize(s); setIsFilterModalOpen(false); }} 
+                  className={`py-3 rounded-2xl text-xs font-black uppercase border-2 transition-all ${filterSize === s ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-100 text-gray-500'}`}
+                >
+                  {s}
+                </button>
               ))}
             </div>
           </div>
-          <button onClick={() => setIsFilterModalOpen(false)} className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-2xl active:scale-95 transition-all">ดูผลลัพธ์</button>
+
+          <button 
+            onClick={() => { setFilterType(''); setFilterSize(''); setIsFilterModalOpen(false); }}
+            className="w-full py-4 text-gray-400 font-bold text-sm"
+          >
+            ล้างตัวกรองทั้งหมด
+          </button>
         </div>
       </Modal>
 
       {/* Fullscreen Image Viewer Modal */}
       {viewImage && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-fadeIn" onClick={() => setViewImage(null)}>
-          <button onClick={() => setViewImage(null)} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white bg-black/50 rounded-full transition-colors">
-            <X size={28} />
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center animate-fadeIn p-4" onClick={() => setViewImage(null)}>
+          <button onClick={() => setViewImage(null)} className="absolute top-6 right-6 p-3 text-white/70 hover:text-white bg-white/10 rounded-full transition-all hover:rotate-90">
+            <X size={32} />
           </button>
-          <img src={viewImage} alt="Full Size" className="max-w-full max-h-full object-contain select-none" onClick={e => e.stopPropagation()} />
+          <img src={viewImage} alt="Full Size" className="max-w-full max-h-full object-contain select-none shadow-2xl rounded-lg" onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>

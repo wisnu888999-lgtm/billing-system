@@ -7,10 +7,10 @@ import DueBillsAlert from './DueBillsAlert'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'หน้าหลัก' },
   { to: '/customers', icon: Users, label: 'ลูกค้า' },
+  { to: '/invoices', icon: FileText, label: 'บิล' },
   { to: '/invoices/new', icon: Plus, label: 'สร้างบิล', isCenter: true },
   { to: '/products', icon: Package, label: 'สินค้า' },
   { to: '/pricing', icon: Tag, label: 'แคตตาล็อกราคา' },
-  { to: '/invoices', icon: FileText, label: 'บิล' },
 ]
 
 export default function Layout() {
@@ -173,7 +173,7 @@ export default function Layout() {
                 onClick={(e) => handleNavClick(e, item.to)}
                 end={item.to === '/invoices'}
                 className={({ isActive }) =>
-                  `flex flex-col items-center py-1 px-2 min-w-[64px] transition-all duration-200 ${
+                  `flex flex-col items-center py-1 px-1 min-w-[40px] transition-all duration-200 ${
                     isActive
                       ? 'text-brand-600'
                       : 'text-gray-400 hover:text-gray-600'

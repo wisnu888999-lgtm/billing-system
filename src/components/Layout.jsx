@@ -147,10 +147,9 @@ export default function Layout() {
       {/* Due Bills Alert Popup */}
       <DueBillsAlert />
 
-      {/* Bottom Navigation (Mobile Only) */}
       {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
-        <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 bg-white/90 backdrop-blur-md border border-white rounded-[2rem] shadow-2xl">
-          <div className="flex justify-around items-end max-w-5xl mx-auto h-16 pb-2 px-2">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] rounded-t-[1.5rem]">
+          <div className="flex justify-around items-center max-w-5xl mx-auto h-16 px-4">
           {navItems.map(item => {
             if (item.isCenter) {
               return (
@@ -158,7 +157,7 @@ export default function Layout() {
                   key={item.to}
                   to={item.to}
                   onClick={(e) => handleNavClick(e, item.to)}
-                  className="flex flex-col items-center relative -top-6"
+                  className="flex flex-col items-center relative -top-5"
                 >
                   <div className="bg-gradient-to-br from-brand-600 to-brand-500 text-white p-4 rounded-full shadow-lg hover:shadow-brand-500/30 active:scale-95 transition-all">
                     <item.icon size={28} strokeWidth={2.5} />

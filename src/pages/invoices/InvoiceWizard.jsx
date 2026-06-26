@@ -333,7 +333,7 @@ export default function InvoiceWizard() {
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className={`animate-fadeIn ${step === 1 && cartItems.length > 0 ? 'pb-28' : 'pb-8'}`}>
+    <div className={`animate-fadeIn ${step === 1 && cartItems.length > 0 ? 'pb-16' : 'pb-4'}`}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-4 max-w-2xl mx-auto">
         <button onClick={() => step > 0 ? setStep(step - 1) : handleExitAttempt(isEdit ? `/invoices/${id}` : '/invoices')} className="p-2 rounded-xl hover:bg-gray-100 transition-colors"><ArrowLeft size={20} /></button>

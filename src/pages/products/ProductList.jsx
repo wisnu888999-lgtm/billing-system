@@ -39,6 +39,20 @@ export default function ProductList() {
   // Fullscreen Image State
   const [viewImage, setViewImage] = useState(null) // url
 
+  // Dropdown States
+  const [openDropdown, setOpenDropdown] = useState(null) // 'category' | 'size' | 'sort' | null
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdown(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
   useEffect(() => { load() }, [])
 
   async function load() {
@@ -72,6 +86,14 @@ export default function ProductList() {
     }
     return 0
   })
+
+  // Helper for Sort Label
+  const getSortLabel = () => {
+    if (sortBy === 'name_asc') return 'เรียงตาม: ชื่อ'
+    if (sortBy === 'sales_desc') return 'เรียงตาม: ขายดี'
+    if (sortBy === 'price_desc') return 'เรียงตาม: ราคา'
+    return 'เรียงลำดับ'
+  }
 
   // === Selection ===
   const isSelectMode = selected.size > 0 || selectionMode
@@ -231,7 +253,7 @@ export default function ProductList() {
   return (
     <div className="animate-fadeIn min-h-screen bg-[var(--color-surface)]">
       {/* Search & Top Actions (Sticky) */}
-      <div className="sticky top-16 md:top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-3">
+      <div className="sticky top-16 md:top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-3">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-black text-gray-800 tracking-tight hidden lg:block">📦 สินค้า</h2>
@@ -243,21 +265,6 @@ export default function ProductList() {
           <div className="flex items-center gap-2">
             {!isSelectMode ? (
               <>
-                <div className="hidden sm:flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
-                  <button onClick={() => setSortBy('name_asc')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${sortBy === 'name_asc' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}>ชื่อ</button>
-                  <button onClick={() => setSortBy('sales_desc')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${sortBy === 'sales_desc' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}>ขายดี</button>
-                  <button onClick={() => setSortBy('price_desc')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${sortBy === 'price_desc' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}>ราคา</button>
-                </div>
-                {/* Mobile Filter Button */}
-                <button 
-                  onClick={() => setIsFilterModalOpen(true)}
-                  className="md:hidden p-2.5 bg-white border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 relative"
-                >
-                  <Filter size={20} />
-                  {(filterType || filterSize) && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-600 border-2 border-white rounded-full"></span>
-                  )}
-                </button>
                 <button onClick={() => navigate('/products/recycle-bin')} className="p-2.5 text-gray-400 hover:text-danger-500 transition-all">
                   <Trash2 size={20} />
                 </button>
@@ -280,47 +287,82 @@ export default function ProductList() {
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row min-h-[calc(100vh-120px)]">
-        {/* Category Sidebar (Left) - Hidden on Mobile */}
-        <aside className="hidden md:block w-56 lg:w-64 border-r border-gray-100 bg-white/50 p-4 sm:p-6 shrink-0">
-          <div className="sticky top-32">
-            <div className="mb-8">
-              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                <Filter size={12} /> หมวดหมู่
-              </h3>
-              <nav className="space-y-1">
-                <button 
-                  onClick={() => setFilterType('')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${filterType === '' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`}
-                >
-                  <Package size={16} /> สินค้าทั้งหมด
+      <div className="max-w-[1600px] mx-auto flex flex-col min-h-[calc(100vh-120px)]">
+        {/* Horizontal Dropdown Filter Bar */}
+        <div ref={dropdownRef} className="px-4 sm:px-6 py-4 flex flex-wrap items-center gap-3 bg-white/30 backdrop-blur-sm sticky top-[120px] md:top-[64px] z-30">
+          
+          {/* Category Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setOpenDropdown(openDropdown === 'category' ? null : 'category')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-black transition-all border-2 ${filterType ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-gray-100 text-gray-600 hover:border-gray-300'}`}
+            >
+              <Package size={14} className={filterType ? 'text-brand-600' : 'text-gray-400'} />
+              {filterType || 'หมวดหมู่ทั้งหมด'}
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'category' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {openDropdown === 'category' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-popIn">
+                <button onClick={() => { setFilterType(''); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 flex items-center justify-between ${!filterType ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>
+                  หมวดหมู่ทั้งหมด {!filterType && <Check size={14} />}
                 </button>
                 {uniqueTypes.map(t => (
-                  <button 
-                    key={t}
-                    onClick={() => setFilterType(t)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${filterType === t ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`}
-                  >
-                    <span className="w-4 h-4 flex items-center justify-center opacity-70">🐾</span> {t}
+                  <button key={t} onClick={() => { setFilterType(t); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 flex items-center justify-between ${filterType === t ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>
+                    {t} {filterType === t && <Check size={14} />}
                   </button>
                 ))}
-              </nav>
-            </div>
+              </div>
+            )}
+          </div>
 
-            <div>
-              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">กรองตามขนาด</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setFilterSize('')} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterSize === '' ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>All</button>
+          {/* Size Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setOpenDropdown(openDropdown === 'size' ? null : 'size')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-black transition-all border-2 ${filterSize ? 'bg-gray-800 border-gray-800 text-white' : 'bg-white border-gray-100 text-gray-600 hover:border-gray-300'}`}
+            >
+              <Filter size={14} className={filterSize ? 'text-white' : 'text-gray-400'} />
+              {filterSize ? `ขนาด: ${filterSize}` : 'ขนาด'}
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'size' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {openDropdown === 'size' && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-popIn">
+                <button onClick={() => { setFilterSize(''); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 flex items-center justify-between ${!filterSize ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>
+                  ทั้งหมด {!filterSize && <Check size={14} />}
+                </button>
                 {uniqueSizes.map(s => (
-                  <button key={s} onClick={() => setFilterSize(s)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterSize === s ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>{s}</button>
+                  <button key={s} onClick={() => { setFilterSize(s); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 flex items-center justify-between ${filterSize === s ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>
+                    {s} {filterSize === s && <Check size={14} />}
+                  </button>
                 ))}
               </div>
-            </div>
+            )}
           </div>
-        </aside>
+
+          {/* Sort Dropdown (Moved from top actions to filter bar for cleaner UI) */}
+          <div className="relative ml-auto hidden sm:block">
+            <button 
+              onClick={() => setOpenDropdown(openDropdown === 'sort' ? null : 'sort')}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-full text-xs font-black text-gray-600 transition-all"
+            >
+              {getSortLabel()}
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {openDropdown === 'sort' && (
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-popIn">
+                <button onClick={() => { setSortBy('name_asc'); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 ${sortBy === 'name_asc' ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>ชื่อ</button>
+                <button onClick={() => { setSortBy('sales_desc'); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 ${sortBy === 'sales_desc' ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>ขายดี</button>
+                <button onClick={() => { setSortBy('price_desc'); setOpenDropdown(null) }} className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-gray-50 ${sortBy === 'price_desc' ? 'text-brand-600 bg-brand-50' : 'text-gray-600'}`}>ราคา</button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Product Grid (Main) */}
-        <section className="flex-1 p-4 sm:p-6 lg:p-8">
+        <section className="flex-1 p-4 sm:p-6 lg:p-8 pt-2">
           {loading ? (
             <div className="h-64 flex items-center justify-center"><LoadingSpinner /></div>
           ) : filtered.length === 0 ? (
@@ -340,26 +382,28 @@ export default function ProductList() {
                       </div>
                     )}
 
-                    {/* Product Image */}
-                    <div 
-                      className="relative w-full aspect-square bg-gray-50 rounded-xl m-1.5 overflow-hidden cursor-pointer select-none"
-                      onClick={(e) => handleItemClick(e, p, index)}
-                      onPointerDown={() => handlePointerDown(p.id, index)}
-                      onPointerUp={handlePointerUp}
-                      onPointerLeave={handlePointerUp}
-                      onContextMenu={(e) => e.preventDefault()}
-                    >
-                      {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${isSel ? 'opacity-40 blur-[1px]' : ''}`} />
-                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-200"><ImageIcon size={40} strokeWidth={1} /></div>
-                      )}
-                      {/* Selection UI */}
-                      {(selectionMode || isSel) && (
-                        <div className={`absolute top-3 left-3 z-10 w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-lg animate-popIn ${isSel ? 'bg-brand-600 text-white' : 'bg-white/90 border-2 border-gray-200'}`}>
-                          {isSel && <Check size={14} strokeWidth={4} />}
-                        </div>
-                      )}
+                    {/* Product Image Wrapper (Framed look) */}
+                    <div className="p-1.5 pb-0">
+                      <div 
+                        className="relative w-full aspect-square bg-gray-50 rounded-xl overflow-hidden cursor-pointer select-none"
+                        onClick={(e) => handleItemClick(e, p, index)}
+                        onPointerDown={() => handlePointerDown(p.id, index)}
+                        onPointerUp={handlePointerUp}
+                        onPointerLeave={handlePointerUp}
+                        onContextMenu={(e) => e.preventDefault()}
+                      >
+                        {p.image_url ? (
+                          <img src={p.image_url} alt={p.name} className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${isSel ? 'opacity-40 blur-[1px]' : ''}`} />
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-200"><ImageIcon size={40} strokeWidth={1} /></div>
+                        )}
+                        {/* Selection UI */}
+                        {(selectionMode || isSel) && (
+                          <div className={`absolute top-3 left-3 z-10 w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-lg animate-popIn ${isSel ? 'bg-brand-600 text-white' : 'bg-white/90 border-2 border-gray-200'}`}>
+                            {isSel && <Check size={14} strokeWidth={4} />}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Product Info */}

@@ -1,16 +1,20 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Package, FilePlus, FileText, LogOut, Plus } from 'lucide-react'
+import { LayoutDashboard, Users, Package, FilePlus, FileText, LogOut, Plus, PanelLeft, Tag } from 'lucide-react'
 import { getCookie, deleteCookie } from '../lib/utils'
+import DueBillsAlert from './DueBillsAlert'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'หน้าหลัก' },
   { to: '/customers', icon: Users, label: 'ลูกค้า' },
   { to: '/invoices/new', icon: Plus, label: 'สร้างบิล', isCenter: true },
   { to: '/products', icon: Package, label: 'สินค้า' },
+  { to: '/pricing', icon: Tag, label: 'แคตตาล็อกราคา' },
   { to: '/invoices', icon: FileText, label: 'บิล' },
 ]
 
 export default function Layout() {
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const userName = getCookie('userName') || 'ผู้ใช้'
@@ -31,101 +35,120 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
-      {/* Top Header (Mobile Only or Header Content) */}
-      <header className={`fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-brand-700 to-brand-900 text-white shadow-lg transition-all duration-300 ${!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) ? 'md:left-64' : ''}`}>
-        <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 w-full">
-          <div className="md:hidden">
-            <h1 className="text-base sm:text-lg font-bold tracking-tight whitespace-nowrap">
-              📋 ระบบวางบิล
-            </h1>
-          </div>
-          <div className="hidden md:block">
-            {/* Breadcrumb or Page Title can go here in the future */}
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-[11px] sm:text-sm opacity-90 bg-white/15 px-2.5 sm:px-3 py-1 rounded-full hidden xs:block md:hidden">{userName}</span>
-            <button
-              onClick={handleLogout}
-              className="p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors md:hidden"
-              title="ออกจากระบบ"
-            >
-              <LogOut size={18} className="sm:w-5 sm:h-5" />
+    <div className="min-h-screen bg-[#f1f5f9] p-4 flex gap-4">
+      {/* 1. Sidebar Card (Desktop) */}
+      {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
+        <aside className={`hidden md:flex flex-col shrink-0 bg-white rounded-3xl shadow-sm border border-gray-100 transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-20' : 'w-72'}`}>
+          <div className={`p-6 pb-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+            {!isCollapsed && (
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="Phurada Logo" className="h-8 rounded-full" />
+                <span className="text-xl font-medium tracking-tight text-gray-900">Phurada</span>
+              </div>
+            )}
+            <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 hover:bg-gray-50 rounded-xl transition-colors bg-transparent text-gray-500 hover:text-gray-800">
+              <PanelLeft size={20} />
             </button>
           </div>
-        </div>
-      </header>
 
-      {/* Sidebar for Desktop */}
-      {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
-        <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-100 flex-col z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] sidebar-glass">
-          <div className="p-6">
-            <h1 className="text-2xl font-black text-brand-700 tracking-tight flex items-center gap-2">
-              <span className="text-3xl">📋</span> วางบิล
-            </h1>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1 ml-11">Management System</p>
+          <div className={`mb-6 transition-all duration-300 ${isCollapsed ? 'px-4' : 'px-6'}`}>
+            <button 
+              onClick={() => navigate('/invoices/new')}
+              className={`flex items-center justify-center gap-3 py-3.5 bg-blue-500 text-white rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 active:scale-95 transition-all font-black text-sm ${isCollapsed ? 'w-12 h-12 p-0 mx-auto rounded-[1rem]' : 'w-full'}`}
+            >
+              <Plus size={20} />
+              {!isCollapsed && <span>สร้างบิลใหม่</span>}
+            </button>
           </div>
 
-          <nav className="flex-1 px-4 py-4 space-y-2">
-            {navItems.map(item => (
+          <nav className={`flex-1 space-y-1.5 overflow-y-auto custom-scrollbar ${isCollapsed ? 'px-4' : 'px-6'}`}>
+            {!isCollapsed && <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4 mt-2 ml-4">เมนูหลัก</div>}
+            {navItems.filter(i => !i.isCenter).map(item => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={(e) => handleNavClick(e, item.to)}
                 end={item.to === '/invoices'}
                 className={({ isActive }) =>
-                  `flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group nav-active-glow ${
+                  `flex items-center py-3 rounded-xl transition-all duration-300 group ${
                     isActive
-                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
-                  }`
+                      ? 'bg-blue-50 text-blue-600 font-black'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-bold'
+                  } ${isCollapsed ? 'justify-center px-0 w-12 mx-auto' : 'px-4 gap-3'}`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.8} className={`${isActive ? 'scale-110' : 'group-hover:scale-110 transition-transform'}`} />
-                    <span className={`text-sm font-bold ${isActive ? 'tracking-wide' : ''}`}>{item.label}</span>
+                    <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} className={`${isActive ? 'scale-110' : 'group-hover:scale-110 transition-transform text-gray-400'}`} />
+                    {!isCollapsed && <span className="text-sm tracking-tight">{item.label}</span>}
                   </>
                 )}
               </NavLink>
             ))}
           </nav>
 
-          <div className="p-4 mt-auto border-t border-gray-50 space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-2xl">
-              <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg">
+          <div className={`mt-auto transition-all duration-300 ${isCollapsed ? 'p-4' : 'p-6'}`}>
+            <button
+              onClick={() => navigate('/home')}
+              className={`w-full flex items-center text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl transition-all font-bold text-xs mb-3 ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-4 py-2.5'}`}
+            >
+              <span className="text-sm">🌐</span>
+              {!isCollapsed && <span>ดูหน้าเว็บทั่วไป</span>}
+            </button>
+            <div className={`flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl mb-2 ${isCollapsed ? 'justify-center p-2' : 'p-3'}`}>
+              <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-blue-600 font-black text-sm shrink-0 border border-gray-100">
                 {userName.charAt(0)}
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-800 truncate">{userName}</p>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Active User</p>
-              </div>
+              {!isCollapsed && (
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-gray-800 truncate">{userName}</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">Active Now</p>
+                </div>
+              )}
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-5 py-3.5 text-danger-500 hover:bg-danger-50 rounded-2xl transition-all font-bold text-sm"
+              className={`flex items-center text-gray-400 hover:text-danger-500 transition-all font-bold text-xs ${isCollapsed ? 'justify-center w-full p-2' : 'gap-3 px-4 py-2'}`}
             >
-              <LogOut size={18} />
-              <span>ออกจากระบบ</span>
+              <LogOut size={16} />
+              {!isCollapsed && <span>Log out</span>}
             </button>
           </div>
         </aside>
       )}
 
-      {/* Main Content */}
-      <main className={`min-h-[calc(100vh-80px)] px-4 sm:px-8 py-6 pt-24 transition-all duration-300 ${!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) ? 'md:pl-64' : ''}`}>
-        <div className={`w-full ${
-          (location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit')))
-            ? 'max-w-5xl mx-auto'
-            : ''
-        }`}>
-          <Outlet />
-        </div>
-      </main>
+      {/* 2. Main Content Card */}
+      <div className="flex-1 flex flex-col min-w-0 h-[calc(100vh-2rem)]">
+        {/* Mobile Top Header (inside content area on mobile) */}
+        <header className="md:hidden flex items-center justify-between px-2 py-2 mb-2">
+          <img src="/logo.png" alt="Phurada" className="h-7 ml-2 rounded-full" />
+          <div className="flex items-center gap-3">
+             <button onClick={() => navigate('/home')} className="p-2 text-blue-600 hover:text-blue-700 flex items-center gap-1 text-xs font-black bg-blue-50 rounded-xl transition-all">
+               <span>🌐</span> หน้าเว็บ
+             </button>
+             <button onClick={handleLogout} className="p-2 text-gray-400"><LogOut size={20} /></button>
+          </div>
+        </header>
+
+        <main className={`flex-1 bg-white rounded-[2rem] sm:rounded-3xl shadow-sm overflow-hidden flex flex-col`}>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-6 lg:p-8">
+            <div className={`w-full ${
+              (location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit')))
+                ? 'max-w-5xl mx-auto'
+                : ''
+            }`}>
+              <Outlet />
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Due Bills Alert Popup */}
+      <DueBillsAlert />
 
       {/* Bottom Navigation (Mobile Only) */}
       {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 bg-white/90 backdrop-blur-md border border-white rounded-[2rem] shadow-2xl">
           <div className="flex justify-around items-end max-w-5xl mx-auto h-16 pb-2 px-2">
           {navItems.map(item => {
             if (item.isCenter) {
@@ -134,14 +157,11 @@ export default function Layout() {
                   key={item.to}
                   to={item.to}
                   onClick={(e) => handleNavClick(e, item.to)}
-                  className="flex flex-col items-center relative -top-5"
+                  className="flex flex-col items-center relative -top-6"
                 >
-                  <div className="bg-brand-600 text-white p-3.5 rounded-full shadow-lg hover:bg-brand-700 hover:shadow-brand-500/30 active:scale-95 transition-all">
+                  <div className="bg-gradient-to-br from-brand-600 to-brand-500 text-white p-4 rounded-full shadow-lg hover:shadow-brand-500/30 active:scale-95 transition-all">
                     <item.icon size={28} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[11px] mt-1 font-bold text-brand-700">
-                    {item.label}
-                  </span>
                 </NavLink>
               )
             }
@@ -165,9 +185,6 @@ export default function Layout() {
                     <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-brand-50 scale-110' : ''}`}>
                       <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
                     </div>
-                    <span className={`text-[11px] mt-0.5 font-medium ${isActive ? 'font-semibold' : ''}`}>
-                      {item.label}
-                    </span>
                   </>
                 )}
               </NavLink>

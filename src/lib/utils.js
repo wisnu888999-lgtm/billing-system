@@ -25,29 +25,33 @@ export function formatDate(dateStr) {
 
 // Format date for input
 export function toInputDate(dateStr) {
-  if (!dateStr) return new Date().toISOString().split('T')[0]
-  return new Date(dateStr).toISOString().split('T')[0]
+  if (!dateStr) return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+  return new Date(dateStr).toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
 }
 
 // Add days to date
 export function addDays(dateStr, days) {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T00:00:00+07:00')
   d.setDate(d.getDate() + days)
-  return d.toISOString().split('T')[0]
+  return d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
 }
 
 // Check if overdue
 export function isOverdue(dueDate) {
   if (!dueDate) return false
-  return new Date(dueDate) < new Date(new Date().toISOString().split('T')[0])
+  const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
+  return dueDate < todayStr
 }
 
 // Days until due
 export function daysUntilDue(dueDate) {
   if (!dueDate) return 0
-  const now = new Date(new Date().toISOString().split('T')[0])
-  const due = new Date(dueDate)
-  return Math.ceil((due - now) / (1000 * 60 * 60 * 24))
+  const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
+  const now = new Date(todayStr + 'T00:00:00+07:00')
+  const due = new Date(dueDate + 'T00:00:00+07:00')
+  const diffTime = due.getTime() - now.getTime()
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
 // Status label in Thai

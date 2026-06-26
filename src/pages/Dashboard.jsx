@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, Clock, AlertTriangle, FileText, Filter, Calendar, Users, ChevronDown, X } from 'lucide-react'
+import { TrendingUp, Clock, AlertTriangle, FileText, Filter, Calendar, Users, ChevronDown, X, DollarSign, Package } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, AreaChart, Area } from 'recharts'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -8,6 +8,49 @@ import { getDashboardData, getCustomers } from '../lib/db'
 import { formatCurrency, formatDate, daysUntilDue } from '../lib/utils'
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1']
+const UI_AVATAR = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`
+const PRODUCT_PLACEHOLDER = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f8fafc&color=94a3b8&rounded=false`
+
+const CustomYAxisTick = ({ x, y, payload, data, type }) => {
+  if (!payload || payload.value == null) return null
+  const item = (data || []).find(i => String(i.id) === String(payload.value))
+  const valueStr = String(item?.name || 'ไม่ระบุ')
+  const imageUrl = item?.image || (type === 'customer' ? UI_AVATAR(valueStr) : PRODUCT_PLACEHOLDER(valueStr))
+
+  return (
+    <g transform={`translate(${x},${y + 3})`}>
+      {imageUrl && (
+        <>
+          <defs>
+            <clipPath id={`clip-${valueStr.replace(/\s+/g, '-')}`}>
+              <rect x="-110" y="-10" width="20" height="20" rx={type === 'customer' ? 10 : 5} />
+            </clipPath>
+          </defs>
+          <image
+            x="-110"
+            y="-10"
+            width="20"
+            height="20"
+            preserveAspectRatio="xMidYMid slice"
+            href={imageUrl}
+            clipPath={`url(#clip-${valueStr.replace(/\s+/g, '-')})`}
+          />
+        </>
+      )}
+      <text 
+        x="-85" 
+        y="4" 
+        textAnchor="start" 
+        fontSize="10" 
+        fontWeight="800" 
+        fill="#1e293b"
+        className="tracking-tighter"
+      >
+        {valueStr.length > 22 ? valueStr.substring(0, 20) + '..' : valueStr}
+      </text>
+    </g>
+  )
+}
 
 export default function Dashboard() {
   const [data, setData] = useState(null)
@@ -52,12 +95,12 @@ export default function Dashboard() {
   if (!data) return null
 
   const summaryCards = [
-    { label: 'ยอดรวมทั้งหมด', value: formatCurrency(data.totalAmount), icon: TrendingUp, color: 'from-brand-500 to-brand-700', onClick: () => navigate('/invoices') },
-    { label: 'กำไรสุทธิ', value: formatCurrency(data.totalProfit), icon: TrendingUp, color: 'from-success-600 to-success-800' },
-    { label: 'อัตรากำไร', value: data.totalAmount > 0 ? ((data.totalProfit / data.totalAmount) * 100).toFixed(1) + '%' : '0%', icon: TrendingUp, color: 'from-indigo-500 to-indigo-700' },
-    { label: 'รอชำระ', value: formatCurrency(data.totalPending), icon: Clock, color: 'from-warning-500 to-warning-600', onClick: () => navigate('/invoices?status=pending') },
-    { label: 'เกินกำหนด', value: formatCurrency(data.totalOverdue), icon: AlertTriangle, color: 'from-danger-500 to-danger-700', onClick: () => navigate('/invoices?status=overdue') },
-    { label: 'จำนวนบิล', value: data.invoiceCount, icon: FileText, color: 'from-gray-500 to-gray-700', onClick: () => navigate('/invoices') },
+    { label: 'ยอดขายสุทธิ', value: formatCurrency(data.totalAmount), icon: DollarSign, color: 'text-brand-600 bg-brand-50' },
+    { label: 'ต้นทุนสินค้า', value: formatCurrency(data.totalCost), icon: Package, color: 'text-slate-600 bg-slate-50' },
+    { label: 'อัตรากำไร', value: data.totalAmount > 0 ? ((data.totalProfit / data.totalAmount) * 100).toFixed(1) + '%' : '0%', icon: TrendingUp, color: 'text-success-600 bg-success-50' },
+    { label: 'รอชำระ', value: formatCurrency(data.totalPending), icon: Clock, color: 'text-warning-600 bg-warning-50', onClick: () => navigate('/invoices?status=pending') },
+    { label: 'เกินกำหนด', value: formatCurrency(data.totalOverdue), icon: AlertTriangle, color: 'text-danger-600 bg-danger-50', onClick: () => navigate('/invoices?status=overdue') },
+    { label: 'จำนวนบิล', value: data.invoiceCount, icon: FileText, color: 'text-indigo-600 bg-indigo-50', onClick: () => navigate('/invoices') },
   ]
 
   const activeFiltersCount = Object.values(filters).filter(v => v !== '').length
@@ -113,27 +156,29 @@ export default function Dashboard() {
       )}
 
       {/* Summary Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {summaryCards.map((card, i) => (
           <div 
             key={i} 
             onClick={card.onClick}
-            className={`bg-gradient-to-br ${card.color} rounded-[1.2rem] sm:rounded-[1.5rem] p-3 sm:p-4 text-white shadow-md relative overflow-hidden group transition-all active:scale-95 ${card.onClick ? 'cursor-pointer hover:shadow-lg hover:-translate-y-1' : ''}`}
+            className={`bg-white rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 border border-gray-100 shadow-sm relative group transition-all active:scale-95 flex flex-col justify-between ${card.onClick ? 'cursor-pointer hover:shadow-md hover:border-gray-200' : ''}`}
           >
-            <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-125 transition-transform duration-500">
-              <card.icon size={40} className="sm:w-14 sm:h-14" />
+            <div className="flex justify-between items-start mb-2 sm:mb-4">
+              <div className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl ${card.color} transition-transform group-hover:scale-110`}>
+                <card.icon size={18} className="sm:w-6 sm:h-6" />
+              </div>
             </div>
-            <div className="flex items-center gap-1 mb-0 opacity-70 relative z-10">
-              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] truncate">{card.label}</span>
+            <div>
+              <p className="text-[9px] sm:text-xs font-bold text-gray-400 mb-0.5 sm:mb-1 tracking-tight">{card.label}</p>
+              <h4 className="text-lg sm:text-2xl font-black text-gray-800 tracking-tighter truncate" title={card.value}>{card.value}</h4>
             </div>
-            <p className="text-sm sm:text-xl font-black relative z-10 truncate tabular-nums tracking-tighter" title={card.value}>{card.value}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
         {/* Sales Trend Line Chart */}
-        <div className="lg:col-span-8 bg-white rounded-[2rem] p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col h-[300px] lg:h-[320px]">
+        <div className="lg:col-span-8 bg-white rounded-[2rem] p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col h-[220px] lg:h-[240px]">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h3 className="text-sm sm:text-base font-black text-gray-800 flex items-center gap-2 tracking-tight">
               <TrendingUp className="text-brand-500" size={18} />
@@ -221,14 +266,23 @@ export default function Dashboard() {
           <div className="flex-1 w-full min-h-0">
             {data.topCustomers.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.topCustomers} layout="vertical" margin={{ left: 10, right: 10 }}>
+                <BarChart data={data.topCustomers} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={80} axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 800, fill: '#64748b' }} />
+                  <YAxis 
+                    type="category" 
+                    dataKey="id" 
+                    width={160} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    interval={0}
+                    tick={<CustomYAxisTick data={data.topCustomers} type="customer" />}
+                  />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '0.8rem', border: 'none', boxShadow: '0 8px 12px -3px rgb(0 0 0 / 0.1)' }}
+                    labelFormatter={(label) => data.topCustomers.find(i => i.id === label)?.name || 'ไม่ระบุ'}
                   />
-                  <Bar dataKey="total" fill="#22c55e" radius={[0, 8, 8, 0]} barSize={14} />
+                  <Bar dataKey="total" fill="#22c55e" radius={[0, 8, 8, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -246,14 +300,23 @@ export default function Dashboard() {
           <div className="flex-1 w-full min-h-0">
             {data.topProducts && data.topProducts.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.topProducts} layout="vertical" margin={{ left: 10, right: 10 }}>
+                <BarChart data={data.topProducts} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={80} axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 800, fill: '#64748b' }} />
+                  <YAxis 
+                    type="category" 
+                    dataKey="id" 
+                    width={160} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    interval={0}
+                    tick={<CustomYAxisTick data={data.topProducts} type="product" />}
+                  />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '0.8rem', border: 'none', boxShadow: '0 8px 12px -3px rgb(0 0 0 / 0.1)' }}
+                    labelFormatter={(label) => data.topProducts.find(i => i.id === label)?.name || 'ไม่ระบุ'}
                   />
-                  <Bar dataKey="qty" fill="#3b82f6" radius={[0, 8, 8, 0]} barSize={14} />
+                  <Bar dataKey="qty" fill="#3b82f6" radius={[0, 8, 8, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (

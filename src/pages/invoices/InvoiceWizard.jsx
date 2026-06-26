@@ -333,7 +333,7 @@ export default function InvoiceWizard() {
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className="animate-fadeIn pb-20">
+    <div className={`animate-fadeIn ${step === 1 && cartItems.length > 0 ? 'pb-28' : 'pb-8'}`}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-4 max-w-2xl mx-auto">
         <button onClick={() => step > 0 ? setStep(step - 1) : handleExitAttempt(isEdit ? `/invoices/${id}` : '/invoices')} className="p-2 rounded-xl hover:bg-gray-100 transition-colors"><ArrowLeft size={20} /></button>
@@ -454,7 +454,7 @@ export default function InvoiceWizard() {
 
       {/* Step 2: Select Products — Grid View like ProductList */}
       {step === 1 && (
-        <div className="pb-32">
+        <div>
           {/* Search + Sort Bar */}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1">
@@ -727,22 +727,21 @@ export default function InvoiceWizard() {
       )}
 
       {/* Navigation Buttons */}
-      <div className="mt-8 flex gap-3 max-w-2xl mx-auto">
-        {step > 0 && (
-          <button onClick={() => setStep(step - 1)} className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl active:scale-95 transition-all">← ย้อนกลับ</button>
-        )}
-        {step === 0 ? (
-          <button onClick={() => setStep(step + 1)} disabled={!canNext()}
-            className={`flex-1 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-lg rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${!canNext() ? 'opacity-40 cursor-not-allowed' : ''}`}>
-            ถัดไป <ArrowRight size={20} />
-          </button>
-        ) : step === 2 ? (
-          <button onClick={handleSubmit} disabled={saving}
-            className="flex-1 py-4 bg-success-600 hover:bg-success-700 text-white font-bold text-lg rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-            {saving ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"/> : <>✅ บันทึกบิล</>}
-          </button>
-        ) : null}
-      </div>
+      {(step === 0 || step === 2) && (
+        <div className="mt-8 flex gap-3 max-w-2xl mx-auto">
+          {step === 0 ? (
+            <button onClick={() => setStep(step + 1)} disabled={!canNext()}
+              className={`flex-1 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-lg rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${!canNext() ? 'opacity-40 cursor-not-allowed' : ''}`}>
+              ถัดไป <ArrowRight size={20} />
+            </button>
+          ) : (
+            <button onClick={handleSubmit} disabled={saving}
+              className="flex-1 py-4 bg-success-600 hover:bg-success-700 text-white font-bold text-lg rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"/> : <>✅ บันทึกบิล</>}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Product Filter Modal */}
       <Modal isOpen={showFilter} onClose={() => setShowFilter(false)} title="ตัวกรองสินค้า">

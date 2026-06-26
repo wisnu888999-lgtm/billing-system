@@ -36,7 +36,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] p-4 flex gap-4">
+    <div className="min-h-screen bg-[#f1f5f9] p-0 md:p-4 flex md:gap-4">
       {/* 1. Sidebar Card (Desktop) */}
       {!(location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit'))) && (
         <aside className={`hidden md:flex flex-col shrink-0 bg-white rounded-3xl shadow-sm border border-gray-100 transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-20' : 'w-72'}`}>
@@ -119,7 +119,7 @@ export default function Layout() {
       )}
 
       {/* 2. Main Content Card */}
-      <div className="flex-1 flex flex-col min-w-0 h-[calc(100vh-2rem)]">
+      <div className="flex-1 flex flex-col min-w-0 h-screen md:h-[calc(100vh-2rem)]">
         {/* Mobile Top Header (inside content area on mobile) */}
         <header className="md:hidden flex items-center justify-between px-2 py-2 mb-2">
           <img src="/logo.png" alt="Phurada" className="h-7 ml-2 rounded-full" />
@@ -131,7 +131,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className={`flex-1 bg-white rounded-[2rem] sm:rounded-3xl shadow-sm overflow-hidden flex flex-col`}>
+        <main className={`flex-1 bg-white rounded-none md:rounded-[2rem] shadow-sm overflow-hidden flex flex-col`}>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-6 lg:p-8">
             <div className={`w-full ${
               (location.pathname.includes('/invoices/new') || (location.pathname.includes('/invoices/') && location.pathname.includes('/edit')))

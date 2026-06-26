@@ -549,7 +549,7 @@ export default function InvoiceWizard() {
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">{p.animal_type} · {p.size}</p>
                           <div className="mt-auto">
                             <p className="text-sm font-black text-brand-600 mb-2">{formatCurrency(p.price)}</p>
-                            <QuantityInput value={qty} onChange={v => updateCart(p.id, v)} max={p.stock_qty} />
+                            <QuantityInput value={qty} onChange={v => updateCart(p.id, v)} max={p.stock_qty} size="sm" />
                           </div>
                         </div>
                       </div>
@@ -731,17 +731,17 @@ export default function InvoiceWizard() {
         {step > 0 && (
           <button onClick={() => setStep(step - 1)} className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl active:scale-95 transition-all">← ย้อนกลับ</button>
         )}
-        {step < 2 ? (
+        {step === 0 ? (
           <button onClick={() => setStep(step + 1)} disabled={!canNext()}
             className={`flex-1 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-lg rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${!canNext() ? 'opacity-40 cursor-not-allowed' : ''}`}>
             ถัดไป <ArrowRight size={20} />
           </button>
-        ) : (
+        ) : step === 2 ? (
           <button onClick={handleSubmit} disabled={saving}
             className="flex-1 py-4 bg-success-600 hover:bg-success-700 text-white font-bold text-lg rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"/> : <>✅ บันทึกบิล</>}
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* Product Filter Modal */}

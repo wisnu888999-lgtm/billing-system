@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { getDashboardData, getCustomers } from '../lib/db'
-import { formatCurrency, formatDate, daysUntilDue } from '../lib/utils'
+import { formatCurrency, formatDate, daysUntilDue, formatDaysUntilDue } from '../lib/utils'
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1']
 const UI_AVATAR = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`
@@ -350,7 +350,7 @@ export default function Dashboard() {
                   <div className="text-right shrink-0">
                     <p className="font-black text-xs text-gray-900">{formatCurrency(inv.total)}</p>
                     <span className={`text-[8px] font-black uppercase tracking-tighter ${isOD ? 'text-danger-600' : 'text-warning-600'}`}>
-                      {isOD ? `เกิน ${Math.abs(days)} ว.` : `${days} ว.`}
+                      {formatDaysUntilDue(inv.due_date, true)}
                     </span>
                   </div>
                 </button>

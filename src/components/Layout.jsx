@@ -22,6 +22,7 @@ export default function Layout() {
   function handleLogout() {
     deleteCookie('userName')
     deleteCookie('userId')
+    sessionStorage.removeItem('due_bills_alert_dismissed')
     navigate('/login')
   }
 

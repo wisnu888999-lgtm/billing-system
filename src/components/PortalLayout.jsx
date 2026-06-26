@@ -16,6 +16,7 @@ export default function PortalLayout() {
     deleteCookie('userName')
     deleteCookie('userId')
     deleteCookie('userRole')
+    sessionStorage.removeItem('due_bills_alert_dismissed')
     navigate('/login')
   }
 

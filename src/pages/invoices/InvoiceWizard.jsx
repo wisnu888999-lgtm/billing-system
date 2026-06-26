@@ -170,7 +170,23 @@ export default function InvoiceWizard() {
       navigate(to)
     }
   }
+  const handleSaveAndExit = async () => {
+    if (!selectedCustomer) {
+      toast.error('กรุณาเลือกลูกค้าก่อนบันทึกบิล')
+      return
+    }
+    if (cartItems.length === 0) {
+      toast.error('กรุณาเลือกสินค้าก่อนบันทึกบิล')
+      return
+    }
+    await handleSubmit()
+  }
 
+  const handleSaveDraftAndExit = async () => {
+    await handleSaveDraft()
+    setShowExitWarning(false)
+    navigate(pendingNavigateTo || '/invoices')
+  }
   const confirmExit = async (saveAsDraft = false) => {
     if (saveAsDraft) {
       await handleSaveDraft()
@@ -798,9 +814,10 @@ export default function InvoiceWizard() {
             <p className="text-gray-500 mt-2">คุณมีรายการสินค้าในตะกร้า หากออกตอนนี้ข้อมูลที่ทำไว้จะหายไป</p>
           </div>
           <div className="space-y-3 pt-2">
-            <button onClick={() => confirmExit(true)} className="w-full py-4 bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all">💾 บันทึกเป็นฉบับร่างแล้วออก</button>
-            <button onClick={() => confirmExit(false)} className="w-full py-4 bg-danger-50 text-danger-600 font-bold rounded-2xl active:scale-95 transition-all">🗑️ ลบรายการและออกเลย</button>
-            <button onClick={() => setShowExitWarning(false)} className="w-full py-3 text-gray-400 font-medium">ยกเลิก</button>
+            <button onClick={handleSaveAndExit} className="w-full py-4 bg-success-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all">💾 บันทึกบิล</button>
+            <button onClick={handleSaveDraftAndExit} className="w-full py-4 bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all">📝 บันทึกฉบับร่าง</button>
+            <button onClick={() => confirmExit(false)} className="w-full py-3 bg-danger-50 text-danger-600 font-bold rounded-2xl active:scale-95 transition-all">🗑️ ออกโดยไม่บันทึก</button>
+            <button onClick={() => setShowExitWarning(false)} className="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition-colors">ยกเลิก</button>
           </div>
         </div>
       </Modal>

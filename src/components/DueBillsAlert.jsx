@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, Bell, ChevronRight, Clock, AlertTriangle } from 'lucide-react'
 import { getDueSoonInvoices } from '../lib/db'
-import { formatCurrency, daysUntilDue } from '../lib/utils'
+import { formatCurrency, daysUntilDue, formatDaysUntilDue } from '../lib/utils'
 
 const SESSION_KEY = 'due_bills_alert_dismissed'
 
@@ -161,7 +161,7 @@ function BillRow({ inv, urgent, onClick }) {
         <div className="text-right">
           <p className="text-[12px] font-black text-slate-900">{formatCurrency(inv.total)}</p>
           <span className={`text-[10px] font-black ${urgent ? 'text-red-500' : 'text-amber-500'}`}>
-            อีก {days} วัน
+            {formatDaysUntilDue(inv.due_date)}
           </span>
         </div>
         <ChevronRight size={14} className="text-slate-300 group-hover:text-orange-400 transition-all" />

@@ -54,6 +54,21 @@ export function daysUntilDue(dueDate) {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
+// Format days until due nicely for Thai users
+export function formatDaysUntilDue(dueDate, short = false) {
+  const days = daysUntilDue(dueDate)
+  if (days < 0) {
+    return short ? `เกิน ${Math.abs(days)} ว.` : `เกินกำหนด ${Math.abs(days)} วัน`
+  }
+  if (days === 0) {
+    return short ? `วันนี้` : `ครบกำหนดวันนี้`
+  }
+  if (days === 1) {
+    return short ? `1 ว.` : `อีก 1 วัน (พรุ่งนี้)`
+  }
+  return short ? `${days} ว.` : `อีก ${days} วัน`
+}
+
 // Status label in Thai
 export function getStatusLabel(status) {
   const labels = {

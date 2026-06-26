@@ -252,8 +252,8 @@ export default function ProductList() {
 
   return (
     <div className="animate-fadeIn min-h-screen bg-[var(--color-surface)]">
-      {/* Search & Top Actions (Sticky) */}
-      <div className="sticky top-16 md:top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-3">
+      {/* Search & Top Actions (Sticky on Desktop only) */}
+      <div className="md:sticky md:top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-3">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-black text-gray-800 tracking-tight hidden lg:block">📦 สินค้า</h2>
@@ -289,7 +289,7 @@ export default function ProductList() {
 
       <div className="max-w-[1600px] mx-auto flex flex-col min-h-[calc(100vh-120px)]">
         {/* Horizontal Dropdown Filter Bar */}
-        <div ref={dropdownRef} className="px-4 sm:px-6 py-4 flex flex-wrap items-center gap-3 bg-white/30 backdrop-blur-sm sticky top-[120px] md:top-[64px] z-30">
+        <div ref={dropdownRef} className="px-4 sm:px-6 py-4 flex flex-wrap items-center gap-3 bg-white/30 backdrop-blur-sm md:sticky md:top-[64px] z-30">
           
           {/* Category Dropdown */}
           <div className="relative">

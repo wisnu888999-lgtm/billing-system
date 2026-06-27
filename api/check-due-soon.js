@@ -19,6 +19,7 @@ export default async function handler(req, res) {
       .from('invoices')
       .select('*, customers(name)')
       .eq('status', 'pending')
+      .is('deleted_at', null)
 
     if (error) {
       console.error('Supabase query error:', error)

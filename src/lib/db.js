@@ -191,6 +191,7 @@ export async function getCustomerSpendingStats() {
     .from('invoices')
     .select('customer_id, total, invoice_date')
     .neq('status', 'cancelled')
+    .is('deleted_at', null)
 
   if (error) return {}
 
